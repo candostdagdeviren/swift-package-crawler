@@ -69,6 +69,7 @@ do {
     let uri = URI(scheme: "https", host: "github.com", port: 443)
     let query = "Package.swift+language%3ASwift+in%3Apath+path%3A%2F"
     
+    //you need to have a redis-server running at 127.0.0.1 port 6379
     let db = try Redbird()
     let client = try Client(uri: uri)
     
@@ -86,7 +87,7 @@ do {
             continue
         }
         let counts = try insertIntoDb(db: db, newlyFetched: fetched)
-        print("Added: \(counts.added), Total Count: \(counts.total)")
+        print("New added: \(counts.added), Total Count: \(counts.total)")
         repos.unionInPlace(fetched)
         page += 1
         sleep(1)
