@@ -239,6 +239,24 @@
       <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
         <BuildableReference
           BuildableIdentifier = "primary"
+          BlueprintIdentifier = "______Target_Jay"
+          BuildableName = "libJay.dylib"
+          BlueprintName = "Jay"
+          ReferencedContainer = "container:swift-package-crawler.xcodeproj">
+        </BuildableReference>
+      </BuildActionEntry>
+      <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+        <BuildableReference
+          BuildableIdentifier = "primary"
+          BlueprintIdentifier = "______Target_JayExample"
+          BuildableName = "JayExample"
+          BlueprintName = "JayExample"
+          ReferencedContainer = "container:swift-package-crawler.xcodeproj">
+        </BuildableReference>
+      </BuildActionEntry>
+      <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+        <BuildableReference
+          BuildableIdentifier = "primary"
           BlueprintIdentifier = "______Target_swiftpackagecrawler"
           BuildableName = "swift-package-crawler"
           BlueprintName = "swift-package-crawler"

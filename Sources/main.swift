@@ -2,6 +2,7 @@
 import HTTPSClient
 import XML
 import Redbird
+import Jay
 
 struct Error: ErrorProtocol {
     let description: String
@@ -56,15 +57,48 @@ func fetchPage(client: Client, query: String, page: Int) throws -> [String] {
     return repos
 }
 
+
+var _githubAPIClient: Client?
+func githubAPIClient() throws -> Client {
+    if let cl = _githubAPIClient {
+        return cl
+    }
+    let uri = URI(scheme: "https", host: "api.github.com", port: 443)
+    let client = try Client(uri: uri)
+    _githubAPIClient = client
+    return client
+}
+
+func getDefaultBranch(repoName: String) throws -> String {
+    
+    let path = "/repos\(repoName)"
+    let client = try githubAPIClient()
+    var response = try client.get(path)
+    
+    switch response.status.statusCode {
+    case 200:
+        //parse response
+        let bytes = try response.body.becomeBuffer().bytes
+        if
+            let dict = try Jay().jsonFromData(bytes) as? [String: Any],
+            let branch = dict["default_branch"] as? String
+        {
+            return branch
+        }
+    default: break
+    }
+    throw Error(String(response.status))
+}
+
 enum FetchPackageResult {
     case FileContents(contents: String, etag: String)
     case Unchanched
 }
 
-func fetchPackageFile(client: Client, name: String, etag: String) throws -> FetchPackageResult {
+func _fetchPackageFile(client: Client, name: String, etag: String, branch: String) throws -> FetchPackageResult {
     
     //https://raw.githubusercontent.com/czechboy0/Jay/master/Package.swift
-    let path = "\(name)/master/Package.swift"
+    let path = "\(name)/\(branch)/Package.swift"
     
     //attach etag and handle 304 properly
     let headers: Headers = ["If-None-Match": Header(etag)]
@@ -77,8 +111,21 @@ func fetchPackageFile(client: Client, name: String, etag: String) throws -> Fetc
         let contents = String(try response.body.becomeBuffer())
         let etag = response.headers["ETag"].values.first ?? ""
         return FetchPackageResult.FileContents(contents: contents, etag: etag)
+    case 404:
+        throw CrawlError.got404
     default:
         throw Error(String(response.status))
+    }
+}
+
+func fetchPackageFile(client: Client, name: String, etag: String) throws -> FetchPackageResult {
+    
+    do {
+        return try _fetchPackageFile(client: client, name: name, etag: etag, branch: "master")
+    } catch CrawlError.got404 {
+        //maybe default branch has a different name
+        let defaultBranch = try getDefaultBranch(repoName: name)
+        return try _fetchPackageFile(client: client, name: name, etag: etag, branch: defaultBranch)
     }
 }
 
@@ -145,20 +192,24 @@ func crawlRepoPackageFiles(db: Redbird) throws {
         var toAdd: [(name: String, etag: String, data: String)] = []
         try names.forEach({ (name) in
             
-            let existing = try db.command("GET", params: ["package::\(name)"]).toString()
-            let comps = existing.split(byString: "::")
             var etag: String? = nil
-            if comps.count == 2 {
-                //we already have a cached version, attach the etag
-                etag = comps[0]
+            if let existing = try db.command("GET", params: ["package::\(name)"]).toMaybeString() {
+                let comps = existing.split(byString: "::")
+                if comps.count == 2 {
+                    //we already have a cached version, attach the etag
+                    etag = comps[0]
+                }
             }
             
-            let result = try fetchPackageFile(client: client, name: name, etag: etag ?? "")
-            
-            switch result {
-            case .FileContents(let contents, let etag):
-                toAdd.append((name, etag, contents))
-            case .Unchanched: break //nothing to do
+            do {
+                let result = try fetchPackageFile(client: client, name: name, etag: etag ?? "")
+                switch result {
+                case .FileContents(let contents, let etag):
+                    toAdd.append((name, etag, contents))
+                case .Unchanched: break //nothing to do
+                }
+            } catch {
+                print("\(name) -> \(error)")
             }
         })
         
@@ -175,9 +226,6 @@ func crawlRepoPackageFiles(db: Redbird) throws {
             toAdd.forEach { print(" -> \($0.name)") }
         }
     }
-    
-    
-    
 }
 
 //calls block with a small number of names at a time, to not have to
@@ -211,8 +259,7 @@ do {
     try crawlRepoNames(db: db)
     
     //download Package.swift for each package
-    //FIXME: Not yet properly working
-//    try crawlRepoPackageFiles(db: db)
+    try crawlRepoPackageFiles(db: db)
     
     //TODO: analyze?
     
