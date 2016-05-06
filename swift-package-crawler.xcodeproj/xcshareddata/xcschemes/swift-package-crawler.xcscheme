@@ -257,9 +257,27 @@
       <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
         <BuildableReference
           BuildableIdentifier = "primary"
-          BlueprintIdentifier = "______Target_swiftpackagecrawler"
-          BuildableName = "swift-package-crawler"
-          BlueprintName = "swift-package-crawler"
+          BlueprintIdentifier = "______Target_Crawler"
+          BuildableName = "Crawler"
+          BlueprintName = "Crawler"
+          ReferencedContainer = "container:swift-package-crawler.xcodeproj">
+        </BuildableReference>
+      </BuildActionEntry>
+      <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+        <BuildableReference
+          BuildableIdentifier = "primary"
+          BlueprintIdentifier = "______Target_PackageExporter"
+          BuildableName = "PackageExporter"
+          BlueprintName = "PackageExporter"
+          ReferencedContainer = "container:swift-package-crawler.xcodeproj">
+        </BuildableReference>
+      </BuildActionEntry>
+      <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+        <BuildableReference
+          BuildableIdentifier = "primary"
+          BlueprintIdentifier = "______Target_Utils"
+          BuildableName = "libUtils.dylib"
+          BlueprintName = "Utils"
           ReferencedContainer = "container:swift-package-crawler.xcodeproj">
         </BuildableReference>
       </BuildActionEntry>
