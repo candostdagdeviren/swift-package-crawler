@@ -2,6 +2,11 @@ import PackageDescription
 
 let package = Package(
     name: "swift-package-crawler",
+    targets: [
+    	Target(name: "Utils"),
+    	Target(name: "Crawler", dependencies: [.Target(name: "Utils")]),
+    	Target(name: "PackageExporter", dependencies: [.Target(name: "Utils")]),
+    ],
     dependencies: [
     	.Package(url: "https://github.com/VeniceX/HTTPSClient.git", majorVersion: 0, minor: 6),
     	.Package(url: "https://github.com/Zewo/XML.git", majorVersion: 0, minor: 6),
