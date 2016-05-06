@@ -3,16 +3,18 @@ import Redbird
 
 do {
     
+    print("Crawler starting")
+    
     //you need to have a redis-server running at 127.0.0.1 port 6379
     let db = try Redbird()
     
     //fetches repo names
-    try crawlRepoNames(db: db)
+    try SearchResultsFetcher().crawlRepoNames(db: db)
     
     //download Package.swift for each package
-    try crawlRepoPackageFiles(db: db)
+    try PackageFileFetcher().crawlRepoPackageFiles(db: db)
     
-    //TODO: analyze?
+    print("Crawler finished")
     
 } catch {
     print(error)

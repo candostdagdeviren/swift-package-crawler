@@ -3,6 +3,13 @@ import Redbird
 import Foundation
 import Utils
 
+func filePath(name: String) {
+    let fixedName = name.components(separatedBy: "/").filter { !$0.isEmpty }.joined(separator: "_")
+    let comps = #file.components(separatedBy: "/").dropLast(3) + ["Cache", "PackageFiles", "\(fixedName)-Package.swift"]
+    let path = comps.joined(separator: "/")
+    return path
+}
+
 func exportPackage(db: Redbird, name: String) throws {
     
     //fetch contents from redis
@@ -15,9 +22,7 @@ func exportPackage(db: Redbird, name: String) throws {
     }
     
     //create path
-    let fixedName = name.components(separatedBy: "/").filter { !$0.isEmpty }.joined(separator: "_")
-    let comps = #file.components(separatedBy: "/").dropLast(3) + ["Cache", "PackageFiles", "\(fixedName)-Package.swift"]
-    let path = comps.joined(separator: "/")
+    let path = filePath(name: name)
     
     //save to path
     try package.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
@@ -52,18 +57,20 @@ func scanPackages(db: Redbird, block: (keys: [String]) throws -> ()) throws {
 
 do {
     
-    let db = try Redbird()
-    var total = 0
-    try scanPackages(db: db, block: { (keys) in
-        
-        try keys.forEach {
-            try exportPackage(db: db, name: $0)
-        }
-        print("Exported \(keys.count) packages")
-        total += keys.count
-    })
-
-    print("Finished exporting \(total) packages")
+    
+    
+//    let db = try Redbird()
+//    var total = 0
+//    try scanPackages(db: db, block: { (keys) in
+//        
+//        try keys.forEach {
+//            try exportPackage(db: db, name: $0)
+//        }
+//        print("Exported \(keys.count) packages")
+//        total += keys.count
+//    })
+//
+//    print("Finished exporting \(total) packages")
     
 } catch {
     print(error)

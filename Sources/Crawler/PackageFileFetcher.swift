@@ -2,6 +2,7 @@
 import HTTPSClient
 import Jay
 import Redbird
+import Utils
 
 final class PackageFileFetcher {
 
@@ -109,7 +110,7 @@ final class PackageFileFetcher {
                 }
                 
                 do {
-                    let result = try fetchPackageFile(client: client, name: name, etag: etag ?? "")
+                    let result = try self.fetchPackageFile(client: client, name: name, etag: etag ?? "")
                     switch result {
                     case .FileContents(let contents, let etag):
                         toAdd.append((name, etag, contents))

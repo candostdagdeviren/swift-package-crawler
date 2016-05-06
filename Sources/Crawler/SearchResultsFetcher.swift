@@ -1,15 +1,16 @@
 import XML
 import HTTPSClient
 import Redbird
+import Utils
 
 final class SearchResultsFetcher {
 
-    private static func makePath(query: String, page: Int) -> String {
+    private func makePath(query: String, page: Int) -> String {
         let path = "/search?l=swift&o=desc&p=\(page)&q=\(query)&ref=searchresults&s=indexed&type=Code&utf8=true"
         return path
     }
 
-    private static func fetchPage(client: Client, query: String, page: Int) throws -> [String] {
+    private func fetchPage(client: Client, query: String, page: Int) throws -> [String] {
         
         let path = makePath(query: query, page: page)
         print("Fetching page \(page)", terminator: " ... ")
