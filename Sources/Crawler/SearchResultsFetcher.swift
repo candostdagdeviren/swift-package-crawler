@@ -75,9 +75,11 @@ final class SearchResultsFetcher {
             
             do {
                 let fetched = try fetchPage(client: client, query: query, page: page)
-                let counts = try insertIntoDb(db: db, newlyFetched: fetched)
-                print("New added: \(counts.added), Total Count: \(counts.total)")
-                repos = repos.union(fetched)
+                if !fetched.isEmpty {
+                    let counts = try insertIntoDb(db: db, newlyFetched: fetched)
+                    print("New added: \(counts.added), Total Count: \(counts.total)")
+                    repos = repos.union(fetched)
+                }
                 page += 1
                 sleep(1)
             } catch CrawlError.got429 {
