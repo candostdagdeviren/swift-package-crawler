@@ -36,7 +36,6 @@ struct Package {
     let name: String
     let dependencies: [Dependency]
     let testDependencies: [Dependency]
-    
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
     init(json: [String: Any]) throws {

@@ -4,14 +4,23 @@ import Foundation
 
 func getUniqueDependencies(root: String, fileNames: [String]) throws {
     
+    var deps: Set<String> = []
     fileNames.forEach {
         let fileName = [root, $0].joined(separator: "/")
+        let githubName = $0.replacingOccurrences(of: "-Package.swift", with: "")
         do {
             let package = try parsePackage(path: fileName)
-            print(package.name)
+            let d = package.allDependencies.map { $0.url }
+            deps.formUnion(d)
+            print("\(githubName) (\(package.name)) has \(d.count) dependencies")
         } catch {
             print("Failed to parse \($0), error \(error)")
         }
+    }
+    
+    print("Overall found \(deps.count) dependencies:")
+    Array(deps).sorted().forEach {
+        print(" -> \($0)")
     }
 }
 
