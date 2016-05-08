@@ -38,9 +38,11 @@ struct Package {
     let testDependencies: [Dependency]
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
-    init(json: [String: Any]) throws {
-        guard let name = json["name"] as? String else {
-            throw Error("Missing package name")
+    init(json: [String: Any], nameHint: String) throws {
+        if let name = json["name"] as? String {
+            self.name = name
+        } else {
+            self.name = nameHint
         }
         guard let dependenciesArray = json["dependencies"] as? [Any] else {
             throw Error("Missing dependencies array")
@@ -48,16 +50,27 @@ struct Package {
         guard let testDependenciesArray = json["testDependencies"] as? [Any] else {
             throw Error("Missing test dependencies array")
         }
-        self.name = name
         self.dependencies = try dependenciesArray.flatMap { $0 as? [String: Any] }.map { try Dependency(json: $0) }
         self.testDependencies = try testDependenciesArray.flatMap { $0 as? [String: Any] }.map { try Dependency(json: $0) }
     }
 }
 
+func nameHintFromPath(path: String) -> String {
+    let fileName = path
+        .components(separatedBy: "/")
+        .last!
+        .replacingOccurrences(of: "-Package.swift", with: "")
+    var comps = fileName.components(separatedBy: "_")
+    comps.removeFirst()
+    let nameHint = comps.joined(separator: "_")
+    return nameHint
+}
+
 func parsePackage(path: String) throws -> Package {
 
+    //Soon in SwiftPM: https://github.com/apple/swift-package-manager/pull/333
     let args: [String] = [
-                             "/Users/honzadvorsky/Documents/swift-repos/swiftpm-hd/.build/debug/swift-build",
+                             "/Users/honzadvorsky/Documents/swift-repos/swiftpm/.build/debug/swift-build",
                              "--dump-package",
                              path
                          ]
@@ -67,7 +80,8 @@ func parsePackage(path: String) throws -> Package {
     guard let json = try Jay().jsonFromData(data) as? [String: Any] else {
         throw Error("Failed to parse JSON for package \(path)")
     }
-    let package = try Package(json: json)
+    let nameHint = nameHintFromPath(path: path)
+    let package = try Package(json: json, nameHint: nameHint)
     return package
 }
 
