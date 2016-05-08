@@ -64,5 +64,6 @@ fastlane/screenshots
 
 dump.rdb
 Cache
+swift-package-crawler.xcodeproj
 
 
