@@ -3,13 +3,6 @@ import Redbird
 import Foundation
 import Utils
 
-func filePath(name: String) -> String {
-    let fixedName = name.components(separatedBy: "/").filter { !$0.isEmpty }.joined(separator: "_")
-    let comps = #file.components(separatedBy: "/").dropLast(3) + ["Cache", "PackageFiles", "\(fixedName)-Package.swift"]
-    let path = comps.joined(separator: "/")
-    return path
-}
-
 func exportPackage(db: Redbird, name: String) throws {
     
     //fetch contents from redis
@@ -56,7 +49,7 @@ func scanPackages(db: Redbird, block: (keys: [String]) throws -> ()) throws {
 }
 
 do {
-    
+
     let db = try Redbird()
     var total = 0
     try scanPackages(db: db, block: { (keys) in
