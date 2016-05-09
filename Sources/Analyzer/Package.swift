@@ -1,8 +1,15 @@
+//
+//  Package.swift
+//  swift-package-crawler
+//
+//  Created by Honza Dvorsky on 5/9/16.
+//
+//
 
-import Tasks
 import Jay
 import Utils
 import Redbird
+import Foundation
 
 struct Version {
     let lowerBound: String
@@ -32,18 +39,27 @@ struct Dependency {
     }
 }
 
+extension Dependency: Hashable {
+    var hashValue: Int { return url.lowercased().hashValue }
+}
+func ==(lhs: Dependency, rhs: Dependency) -> Bool {
+    return lhs.url.lowercased() == rhs.url.lowercased()
+}
+
 struct Package {
     let name: String
+    let remoteName: String
     let dependencies: [Dependency]
     let testDependencies: [Dependency]
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
-    init(json: [String: Any], nameHint: String) throws {
+    init(json: [String: Any], remoteName: (String, String)) throws {
         if let name = json["name"] as? String {
             self.name = name
         } else {
-            self.name = nameHint
+            self.name = remoteName.1
         }
+        self.remoteName = "/\(remoteName.0)/\(remoteName.1)"
         guard let dependenciesArray = json["dependencies"] as? [Any] else {
             throw Error("Missing dependencies array")
         }
@@ -55,33 +71,25 @@ struct Package {
     }
 }
 
-func nameHintFromPath(path: String) -> String {
+func remoteNameHintFromPath(path: String) -> (String, String) {
     let fileName = path
         .components(separatedBy: "/")
         .last!
-        .replacingOccurrences(of: "-Package.swift", with: "")
+        .replacingOccurrences(of: "-Package.json", with: "")
     var comps = fileName.components(separatedBy: "_")
-    comps.removeFirst()
-    let nameHint = comps.joined(separator: "_")
-    return nameHint
+    guard comps.count == 2 else { print("!!! Can't hint from \(path)"); return ("","") }
+    return (comps[0], comps[1])
 }
 
-func parsePackage(path: String) throws -> Package {
-
-    //Soon in SwiftPM: https://github.com/apple/swift-package-manager/pull/333
-    let args: [String] = [
-                             "/Users/honzadvorsky/Documents/swift-repos/swiftpm/.build/debug/swift-build",
-                             "--dump-package",
-                             path
-                         ]
-    let result = try Task.run(args)
-    guard result.code == 0 else { throw Error("Failed to parse package \(path), error \(result.stderr)") }
-    let data = result.stdout.toBytes()
+func parseJSONPackage(path: String) throws -> Package {
+    
+    let jsonString = try String(contentsOfFile: path)
+    let remoteNameHint = remoteNameHintFromPath(path: path)
+    let data = jsonString.toBytes()
     guard let json = try Jay().jsonFromData(data) as? [String: Any] else {
         throw Error("Failed to parse JSON for package \(path)")
     }
-    let nameHint = nameHintFromPath(path: path)
-    let package = try Package(json: json, nameHint: nameHint)
+    let package = try Package(json: json, remoteName: remoteNameHint)
     return package
 }
 
