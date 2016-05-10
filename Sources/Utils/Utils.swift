@@ -94,6 +94,12 @@ extension String {
         comps.append(String(chars))
         return comps.joined(separator: "/")
     }
+    
+    public func githubName() -> String {
+        let start = self.range(of: "https://github.com")?.upperBound ?? self.startIndex
+        let end = self.range(of: ".git")?.lowerBound ?? self.endIndex
+        return String(self.characters[start..<end])
+    }
 }
 
 public func deletePackage(db: Redbird, name: String) throws {

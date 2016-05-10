@@ -23,7 +23,8 @@ func analyzeAllPackages() throws {
     
     let analyses: [Analysis] =
         [
-            AllUniqueDependencies(db: db)
+//            AllUniqueDependencies(db: db),
+            DependencyTrees()
             ]
     
     try analyses.forEach { (analysis) in
