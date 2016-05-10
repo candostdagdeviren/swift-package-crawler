@@ -25,6 +25,9 @@ struct DependencyTrees: Analysis {
         //look at the histogram of dependencies
         dependencyCountHistogram(directDeps)
         
+        //find most popular ones
+        dependenciesTopChart(directDeps)
+        
         print("Analyzed \(directDeps.count) packages")
     }
     
@@ -44,6 +47,31 @@ struct DependencyTrees: Analysis {
             let percent = Double(Int(10000 * Double(count)/Double(total)))/100
             print(" \(key) \t-> \t\(count) \t[\(percent)%]")
         }
+        print("Total: \(total) packagees")
+    }
+    
+    private func dependenciesTopChart(_ directDeps: [String: [String]]) {
+        
+        var dependees: [String: Set<String>] = [:]
+        directDeps.forEach { (name: String, dependencies: [String]) in
+            dependencies.forEach({ (dependency) in
+                var d = dependees[dependency] ?? []
+                d.insert(name)
+                dependees[dependency] = d
+            })
+        }
+        
+        let topCharts = dependees
+            .map { (key, value) -> (String, Int) in
+                return (key, value.count)
+            }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
+        
+        print("Top 10 most popular direct dependencies")
+        for i in 1...10 {
+            let item = topCharts[i]
+            print(" \(i). -> [\(item.1) depend on] \(item.0)")
+        }
+        print("Total of \(topCharts.count) packages were used as a dependency at least once")
     }
 }
 
