@@ -10,6 +10,10 @@ import HTTPSClient
 import Jay
 import Redbird
 import Utils
+import POSIX
+
+//FIXME: store the etags separately from the files, so that we don't
+//have to load the huge files from redis just to get the etag
 
 public class PackageFileFetcher {
 
@@ -99,12 +103,13 @@ public class PackageFileFetcher {
         }
     }
 
+    
+    
     //pulls repo names from db and fetches the package.swift
     //for each. uses ETags to not re-fetch unchanged files.
     public func crawlRepoPackageFiles(db: Redbird) throws {
         
-        let uri = URI(scheme: "https", host: "raw.githubusercontent.com", port: 443)
-        let client = try Client(uri: uri)
+        let client = try packageFileClient()
         
         setbuf(__stdoutp, nil)
         
@@ -129,10 +134,14 @@ public class PackageFileFetcher {
                         toAdd.append((name, etag, contents))
                     case .Unchanched: break //nothing to do
                     }
-                    print(".", terminator: "")
+//                    print(".", terminator: "")
                 } catch CrawlError.got404 {
                     print("Got 404 for package \(name), removing it from our list")
                     try deletePackage(db: db, name: name)
+                } catch SystemError.operationTimedOut {
+                    print("Connection timed out")
+                    //is this a TCPSSL bug or what? 
+                    //TODO: refactor & autoretry once
                 } catch {
                     print("\(name) -> \(error)")
                 }
