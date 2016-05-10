@@ -25,8 +25,10 @@ struct DependencyTrees: Analysis {
         //look at the histogram of dependencies
         dependencyCountHistogram(directDeps)
         
-        //find most popular ones
+        //find most popular direct dependencies
         dependenciesTopChart(directDeps)
+        
+        //TODO: find most popular indirect/transitive dependencies (reach)
         
         print("Analyzed \(directDeps.count) packages")
     }
