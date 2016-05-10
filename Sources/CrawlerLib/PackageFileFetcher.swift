@@ -11,7 +11,9 @@ import Jay
 import Redbird
 import Utils
 
-final class PackageFileFetcher {
+public class PackageFileFetcher {
+
+    public init() { }
 
     private var _githubAPIClient: Client?
     private func githubAPIClient() throws -> Client {
@@ -51,6 +53,8 @@ final class PackageFileFetcher {
             {
                 return branch
             }
+        case 404:
+            throw CrawlError.got404
         default: break
         }
         throw Error(String(response.status))
@@ -97,7 +101,7 @@ final class PackageFileFetcher {
 
     //pulls repo names from db and fetches the package.swift
     //for each. uses ETags to not re-fetch unchanged files.
-    func crawlRepoPackageFiles(db: Redbird) throws {
+    public func crawlRepoPackageFiles(db: Redbird) throws {
         
         let uri = URI(scheme: "https", host: "raw.githubusercontent.com", port: 443)
         let client = try Client(uri: uri)
@@ -123,6 +127,9 @@ final class PackageFileFetcher {
                         toAdd.append((name, etag, contents))
                     case .Unchanched: break //nothing to do
                     }
+                } catch CrawlError.got404 {
+                    print("Got 404 for package \(name), removing it from our list")
+                    try deletePackage(db: db, name: name)
                 } catch {
                     print("\(name) -> \(error)")
                 }

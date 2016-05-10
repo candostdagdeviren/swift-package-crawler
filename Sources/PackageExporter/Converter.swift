@@ -106,8 +106,7 @@ public func exportAllPackages() throws {
                 try path.rm()
                 
                 //delete from redis
-                try db.command("DEL", params: ["package::\($0)"])
-                try db.command("SREM", params: ["github_names", "\($0)"])
+                try deletePackage(db: db, name: $0)
             }
         }
         print("Exported \(keys.count) packages")

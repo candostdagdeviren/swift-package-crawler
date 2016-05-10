@@ -7,6 +7,7 @@
 //
 
 import Utils
+import Redbird
 
 protocol Analysis {
     func analyze(nextPackage: () throws -> Package?) throws
@@ -18,10 +19,11 @@ func analyzeAllPackages() throws {
         .ls()
         .filter { $0.hasSuffix("-Package.json") }
         .map { root.addPathComponents($0) }
+    let db = try Redbird()
     
     let analyses: [Analysis] =
         [
-            AllUniqueDependencies()
+            AllUniqueDependencies(db: db)
             ]
     
     try analyses.forEach { (analysis) in

@@ -77,8 +77,10 @@ func remoteNameHintFromPath(path: String) -> (String, String) {
         .last!
         .replacingOccurrences(of: "-Package.json", with: "")
     var comps = fileName.components(separatedBy: "_")
-    guard comps.count == 2 else { print("!!! Can't hint from \(path)"); return ("","") }
-    return (comps[0], comps[1])
+    let name = comps.removeFirst()
+    let repo = comps.joined(separator: "_")
+    guard !name.isEmpty && !repo.isEmpty else { print("!!! Can't hint from \(path)"); return ("","") }
+    return (name, repo)
 }
 
 func parseJSONPackage(path: String) throws -> Package {

@@ -11,8 +11,10 @@ import HTTPSClient
 import Redbird
 import Utils
 
-final class SearchResultsFetcher {
-
+public struct SearchResultsFetcher {
+    
+    public init() { }
+    
     private func makePath(query: String, page: Int) -> String {
         let path = "/search?l=swift&o=desc&p=\(page)&q=\(query)&ref=searchresults&s=indexed&type=Code&utf8=true"
         return path
@@ -30,7 +32,7 @@ final class SearchResultsFetcher {
         
         var response = try client.get(path, headers: headers)
         let status = response.status.statusCode
-        print(status)
+        print(status, terminator: " -> ")
         switch status {
         case 200: break
         case 429: throw CrawlError.got429
@@ -54,7 +56,7 @@ final class SearchResultsFetcher {
         return repos
     }
 
-    private func insertIntoDb(db: Redbird, newlyFetched: [String]) throws -> (added: Int, total: Int) {
+    public func insertIntoDb(db: Redbird, newlyFetched: [String]) throws -> (added: Int, total: Int) {
         
         let setName = "github_names"
         let params = [setName] + newlyFetched
@@ -70,7 +72,7 @@ final class SearchResultsFetcher {
 
     //crawl github for repositories which have a Package.swift at their root
     //and are written in swift
-    func crawlRepoNames(db: Redbird) throws {
+    public func crawlRepoNames(db: Redbird) throws {
         
         let uri = URI(scheme: "https", host: "github.com", port: 443)
         let client = try Client(uri: uri)
@@ -79,14 +81,27 @@ final class SearchResultsFetcher {
         var page = 1
         let max = Int.max
         var repos: Set<String> = []
+        var noNewResultsPages = 0
+        let noNewResultThreshold = 9
         while page <= max {
             
+            if noNewResultsPages >= noNewResultThreshold {
+                //stop searching, we're probably up to date
+                print("Stopping, no new results in the last \(noNewResultThreshold) pages")
+                break
+            }
+
             do {
                 let fetched = try fetchPage(client: client, query: query, page: page)
                 if !fetched.isEmpty {
                     let counts = try insertIntoDb(db: db, newlyFetched: fetched)
                     print("New added: \(counts.added), Total Count: \(counts.total)")
                     repos = repos.union(fetched)
+                    if counts.added > 0 {
+                        noNewResultsPages = 0
+                    } else {
+                        noNewResultsPages += 1
+                    }
                 }
                 page += 1
                 sleep(1)
@@ -97,14 +112,13 @@ final class SearchResultsFetcher {
                 print("Continuing")
                 continue
             } catch CrawlError.got404 {
-                print("Finished")
+                print("End of search results, finishing")
                 break
             }
         }
         
         let sorted = Array(repos).sorted()
         print("Fetched \(sorted.count) repos")
-    //    sorted.forEach { print(" -> " + $0) }
     }
 }
 

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Redbird
 
 public struct Error: ErrorProtocol {
     let description: String
@@ -93,4 +94,9 @@ extension String {
         comps.append(String(chars))
         return comps.joined(separator: "/")
     }
+}
+
+public func deletePackage(db: Redbird, name: String) throws {
+    try db.command("DEL", params: ["package::\(name)"])
+    try db.command("SREM", params: ["github_names", "\(name)"])
 }

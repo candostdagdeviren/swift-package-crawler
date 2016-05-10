@@ -8,6 +8,7 @@
 
 import Redbird
 import Utils
+import CrawlerLib
 
 var args = Process.arguments.dropFirst()
 
