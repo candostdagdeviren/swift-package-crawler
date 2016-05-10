@@ -106,6 +106,8 @@ public class PackageFileFetcher {
         let uri = URI(scheme: "https", host: "raw.githubusercontent.com", port: 443)
         let client = try Client(uri: uri)
         
+        setbuf(__stdoutp, nil)
+        
         try scanNames(db: db) { (names) in
             
             var toAdd: [(name: String, etag: String, data: String)] = []
@@ -127,6 +129,7 @@ public class PackageFileFetcher {
                         toAdd.append((name, etag, contents))
                     case .Unchanched: break //nothing to do
                     }
+                    print(".", terminator: "")
                 } catch CrawlError.got404 {
                     print("Got 404 for package \(name), removing it from our list")
                     try deletePackage(db: db, name: name)
@@ -135,7 +138,7 @@ public class PackageFileFetcher {
                 }
             })
             
-            print("Verified \(names.count - toAdd.count) cached files")
+            print(" Verified \(names.count - toAdd.count) cached files")
 
             //add all the new data to db
             if !toAdd.isEmpty {
