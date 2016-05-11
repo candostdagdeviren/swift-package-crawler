@@ -11,7 +11,7 @@
 - `.build/debug/PackageExporter`
 - Run analysis of results with `.build/debug/Analysis`
 
-To run the whole pipeline, `run .build/debug/Crawler && .build/debug/PackageExporter && .build/debug/Analyzer`
+To run the whole pipeline, run `.build/debug/Crawler && .build/debug/PackageExporter && .build/debug/Analyzer`
 
 - more to come
 
