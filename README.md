@@ -7,9 +7,10 @@
 - Start a Redis server with the default config `redis-server` (install with `brew install redis`)
 - Start the Crawler to find the packages & pull the Package.swift files (takes a few minutes)
 - `.build/debug/Crawler`
-- Export the Package.swift files into `./Cache/PackageFiles`, first run `mkdir Cache; cd Cache; mkdir PackageFiles; cd ..`
+- Export the Package.swift files into `./Cache/PackageSwiftFiles` and `./Cache/PackageJSONFiles`
 - `.build/debug/PackageExporter`
-- Look into the `./Cache/PackageFiles` folder, should contain all the Package.swift files
+- Run analysis of results
+- `.build/debug/Analysis`
 
 - more to come
 
