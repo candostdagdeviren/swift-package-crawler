@@ -9,8 +9,9 @@
 - `.build/debug/Crawler`
 - Export the Package.swift files into `./Cache/PackageSwiftFiles` and `./Cache/PackageJSONFiles`
 - `.build/debug/PackageExporter`
-- Run analysis of results
-- `.build/debug/Analysis`
+- Run analysis of results with `.build/debug/Analysis`
+
+To run the whole pipeline, `run .build/debug/Crawler && .build/debug/PackageExporter && .build/debug/Analyzer`
 
 - more to come
 
