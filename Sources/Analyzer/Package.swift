@@ -47,10 +47,16 @@ func ==(lhs: Dependency, rhs: Dependency) -> Bool {
 }
 
 struct Package {
+    
+    //base
     let name: String
-    let remoteName: String
     let dependencies: [Dependency]
     let testDependencies: [Dependency]
+    let pkgConfig: String?
+    let providers: [[String: String]]?
+    
+    //extras
+    let remoteName: String
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
     init(json: [String: Any], remoteName: (String, String)) throws {
@@ -68,6 +74,26 @@ struct Package {
         }
         self.dependencies = try dependenciesArray.flatMap { $0 as? [String: Any] }.map { try Dependency(json: $0) }
         self.testDependencies = try testDependenciesArray.flatMap { $0 as? [String: Any] }.map { try Dependency(json: $0) }
+
+        self.pkgConfig = json["pkgConfig"] as? String
+        
+        if let anyProviders = json["package.providers"] as? [Any] {
+            var provs: [[String: String]] = []
+            anyProviders.forEach({ (item) in
+                if let dict = item as? [String: Any] {
+                    var provider: [String: String] = [:]
+                    dict.forEach({ (key, value) in
+                        if let stringValue = value as? String {
+                            provider[key] = stringValue
+                        }
+                    })
+                    provs.append(provider)
+                }
+            })
+            self.providers = provs
+        } else {
+            self.providers = nil
+        }
     }
 }
 

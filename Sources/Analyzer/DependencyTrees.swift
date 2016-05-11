@@ -103,7 +103,7 @@ struct DependencyTrees: Analysis {
         print("| --- | --- | --- |")
         histogram.keys.sorted().forEach { (key) in
             let count = histogram[key]!
-            let percent = Double(Int(10000 * Double(count)/Double(total)))/100
+            let percent = count.percentOf(total)
             print("| \(key.leftPad(3)) | \(count.leftPad(3)) | \(percent.leftPad(5))% |")
         }
     }

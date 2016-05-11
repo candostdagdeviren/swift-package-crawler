@@ -23,8 +23,9 @@ func analyzeAllPackages() throws {
     
     let analyses: [Analysis] =
         [
-//            AllUniqueDependencies(db: db),
-            DependencyTrees()
+            AllUniqueDependencies(db: db),
+            DependencyTrees(),
+            PkgConfigAnalysis()
             ]
     
     try analyses.forEach { (analysis) in

@@ -120,6 +120,11 @@ extension Int {
     public func leftPad(_ padding: Int) -> String {
         return String(self).leftPad(padding)
     }
+    
+    public func percentOf(_ total: Int) -> Double {
+        let percent = Double(Int(10000 * Double(self)/Double(total)))/100
+        return percent
+    }
 }
 
 extension Double {
