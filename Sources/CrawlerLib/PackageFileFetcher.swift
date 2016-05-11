@@ -110,9 +110,7 @@ public class PackageFileFetcher {
     public func crawlRepoPackageFiles(db: Redbird) throws {
         
         let client = try packageFileClient()
-        
-        setbuf(__stdoutp, nil)
-        
+                
         try scanNames(db: db) { (names) in
             
             var toAdd: [(name: String, etag: String, data: String)] = []
