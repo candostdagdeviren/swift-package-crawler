@@ -57,9 +57,9 @@ struct DependencyTrees: Analysis {
         var dependees: [String: Set<String>] = [:]
         directDeps.forEach { (name: String, dependencies: [String]) in
             dependencies.forEach({ (dependency) in
-                var d = dependees[dependency] ?? []
+                var d = dependees[dependency.lowercased()] ?? []
                 d.insert(name)
-                dependees[dependency] = d
+                dependees[dependency.lowercased()] = d
             })
         }
         
@@ -68,8 +68,9 @@ struct DependencyTrees: Analysis {
                 return (key, value.count)
             }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
         
-        print("Top 10 most popular direct dependencies")
-        for i in 1...10 {
+        let count = 20
+        print("Top \(count) most popular direct dependencies")
+        for i in 1...count {
             let item = topCharts[i]
             print(" \(i). -> [\(item.1) depend on] \(item.0)")
         }
