@@ -79,9 +79,12 @@ struct DependencyTrees: Analysis {
         
         let count = 10
         print("Top \(count) most popular transitive dependencies")
-        for i in 1...count {
+        
+        print("| Rank | # Dependees | Name |")
+        print("| --- | --- | --- |")
+        for i in 0...count-1 {
             let item = topCharts[i]
-            print(" \(i.leftPad(3)). -> [\(item.1.leftPad(4)) depend on] \(item.0)")
+            print("| \((i+1).leftPad(3)). | \(item.1.leftPad(3)) | \(item.0.markdownGithubLink()) |")
         }
     }
     
@@ -96,10 +99,12 @@ struct DependencyTrees: Analysis {
         let total = histogram.values.reduce(0, combine: +)
         
         print("Dependency histogram:")
+        print("| # Dependencies | # Packages | % of Total |")
+        print("| --- | --- | --- |")
         histogram.keys.sorted().forEach { (key) in
             let count = histogram[key]!
             let percent = Double(Int(10000 * Double(count)/Double(total)))/100
-            print(" \(key.leftPad(3)) dep -> \(count.leftPad(3)) packages [\(percent.leftPad(5))%]")
+            print("| \(key.leftPad(3)) | \(count.leftPad(3)) | \(percent.leftPad(5))% |")
         }
     }
     
@@ -117,16 +122,19 @@ struct DependencyTrees: Analysis {
     
     private func directDependenciesTopChart(_ directDeps: [String: [String]]) {
         
-        let topCharts = _dependees(directDependencies: directDeps)
+        let dependees = _dependees(directDependencies: directDeps)
+        let topCharts = dependees
             .map { (key, value) -> (String, Int) in
                 return (key, value.count)
             }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
         
         let count = 10
         print("Top \(count) most popular direct dependencies")
-        for i in 1...count {
+        print("| Rank | # Dependees | Name |")
+        print("| --- | --- | --- |")
+        for i in 0...count-1 {
             let item = topCharts[i]
-            print(" \(i.leftPad(3)). -> [\(item.1.leftPad(3)) depend on] \(item.0)")
+            print("| \((i+1).leftPad(3)). | \(item.1.leftPad(3)) | \(item.0.markdownGithubLink()) |")
         }
     }
 }
