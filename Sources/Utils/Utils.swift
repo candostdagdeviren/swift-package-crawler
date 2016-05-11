@@ -100,7 +100,30 @@ extension String {
         let end = self.range(of: ".git")?.lowerBound ?? self.endIndex
         return String(self.characters[start..<end])
     }
+    
+    public func leftPad(_ padding: Int) -> String {
+        let length = self.lengthOfBytes(using: NSUTF8StringEncoding)
+        if length >= padding {
+            return self
+        } else {
+            let pad = Array(repeating: " ", count: padding - length).joined(separator: "")
+            return pad + self
+        }
+    }
 }
+
+extension Int {
+    public func leftPad(_ padding: Int) -> String {
+        return String(self).leftPad(padding)
+    }
+}
+
+extension Double {
+    public func leftPad(_ padding: Int) -> String {
+        return String(self).leftPad(padding)
+    }
+}
+
 
 public func deletePackage(db: Redbird, name: String) throws {
     try db.command("DEL", params: ["package::\(name)"])

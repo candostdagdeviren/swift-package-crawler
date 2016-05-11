@@ -26,11 +26,63 @@ struct DependencyTrees: Analysis {
         dependencyCountHistogram(directDeps)
         
         //find most popular direct dependencies
-        dependenciesTopChart(directDeps)
+        directDependenciesTopChart(directDeps)
         
-        //TODO: find most popular indirect/transitive dependencies (reach)
+        //find most popular indirect/transitive dependencies (reach)
+        transitiveDependenciesTopChart(directDeps)
         
         print("Analyzed \(directDeps.count) packages")
+    }
+    
+    private func transitiveDependenciesTopChart(_ directDeps: [String: [String]]) {
+        
+        var transitiveDependees: [String: Set<String>] = [:]
+        let directDependees = _dependees(directDependencies: directDeps)
+        var stack: Set<String> = [] //for cycle detection
+        
+        func _calculateTransitiveDependees(name: String) -> Set<String> {
+            //check the cache first
+            if let deps = transitiveDependees[name] {
+                return deps
+            }
+            
+//            print("+ \(name)?")
+            if stack.contains(name) {
+                //cycle detected
+                print("Cycle detected when re-adding \(name). Cycle between \(stack)")
+                return []
+            }
+            stack.insert(name)
+            
+            //by definition, transitive dependees are
+            //all direct dependees + their transitive dependees
+            let direct = directDependees[name] ?? []
+            let transDepsOfDeps = direct
+                .map { _calculateTransitiveDependees(name: $0) }
+                .reduce(Set<String>(), combine: { $0.union($1) })
+            let allDependees = direct.union(transDepsOfDeps)
+            transitiveDependees[name] = allDependees
+            
+            stack.remove(name)
+//            print("- \(name) -> \(allDependees.count)")
+            
+            return allDependees
+        }
+        
+        //run
+        directDependees.keys.forEach { _calculateTransitiveDependees(name: $0) }
+        
+        let topCharts = transitiveDependees
+            .map { (key, value) -> (String, Int) in
+                return (key, value.count)
+            }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
+        
+        let count = 10
+        print("Top \(count) most popular transitive dependencies")
+        for i in 1...count {
+            let item = topCharts[i]
+            print(" \(i.leftPad(3)). -> [\(item.1.leftPad(4)) depend on] \(item.0)")
+        }
     }
     
     private func dependencyCountHistogram(_ directDeps: [String: [String]]) {
@@ -47,34 +99,35 @@ struct DependencyTrees: Analysis {
         histogram.keys.sorted().forEach { (key) in
             let count = histogram[key]!
             let percent = Double(Int(10000 * Double(count)/Double(total)))/100
-            print(" \(key) \t-> \t\(count) \t[\(percent)%]")
+            print(" \(key.leftPad(3)) dep -> \(count.leftPad(3)) packages [\(percent.leftPad(5))%]")
         }
-        print("Total: \(total) packagees")
     }
     
-    private func dependenciesTopChart(_ directDeps: [String: [String]]) {
-        
+    private func _dependees(directDependencies: [String: [String]]) -> [String: Set<String>] {
         var dependees: [String: Set<String>] = [:]
-        directDeps.forEach { (name: String, dependencies: [String]) in
+        directDependencies.forEach { (name: String, dependencies: [String]) in
             dependencies.forEach({ (dependency) in
                 var d = dependees[dependency.lowercased()] ?? []
-                d.insert(name)
+                d.insert(name.lowercased())
                 dependees[dependency.lowercased()] = d
             })
         }
+        return dependees
+    }
+    
+    private func directDependenciesTopChart(_ directDeps: [String: [String]]) {
         
-        let topCharts = dependees
+        let topCharts = _dependees(directDependencies: directDeps)
             .map { (key, value) -> (String, Int) in
                 return (key, value.count)
             }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
         
-        let count = 20
+        let count = 10
         print("Top \(count) most popular direct dependencies")
         for i in 1...count {
             let item = topCharts[i]
-            print(" \(i). -> [\(item.1) depend on] \(item.0)")
+            print(" \(i.leftPad(3)). -> [\(item.1.leftPad(3)) depend on] \(item.0)")
         }
-        print("Total of \(topCharts.count) packages were used as a dependency at least once")
     }
 }
 
