@@ -101,8 +101,12 @@ extension String {
         return String(self.characters[start..<end])
     }
     
-    public func markdownGithubLink() -> String {
+    public func markdownGithubRepoLink() -> String {
         return "[\(self)](https://github.com\(self))"
+    }
+    
+    public func markdownGithubUserLink() -> String {
+        return "[\(self)](https://github.com/\(self))"
     }
     
     public func leftPad(_ padding: Int) -> String {
