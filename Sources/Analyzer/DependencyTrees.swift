@@ -97,7 +97,6 @@ struct DependencyTrees: Analysis {
         }
     }
     
-    
     private func transitiveDependenciesTopChart(_ directDeps: [String: [String]]) {
         
         let transitiveDependees = _transitiveDependees(directDeps)
