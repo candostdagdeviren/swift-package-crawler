@@ -64,20 +64,23 @@ func scanPackages(db: Redbird, block: (keys: [String]) throws -> ()) throws {
     let maxScans = Int.max
     var scanCount = 0
     while scanCount <= maxScans {
-        let arr = try db.command("SCAN", params: ["\(cursor)"]).toArray()
-        guard arr.count == 2 else { throw Error("Invalid Redis response \(arr)") }
-        guard
-            let newCursorString = try arr[0].toMaybeString(),
-            let newCursor = Int(newCursorString),
-            let keysObjs = try arr[1].toMaybeArray()
-            else { throw Error("Invalid Redis response \(arr)") }
-        let keys = keysObjs.flatMap { try? $0.toString() }.filter { $0.hasPrefix("package::") }
-        let names = keys.flatMap { $0.components(separatedBy: "::").last }
-        
-        //call block with keys
-        try block(keys: names)
-        scanCount += 1
-        cursor = newCursor
+        try autoreleasepool { _ in
+            
+            let arr = try db.command("SCAN", params: ["\(cursor)"]).toArray()
+            guard arr.count == 2 else { throw Error("Invalid Redis response \(arr)") }
+            guard
+                let newCursorString = try arr[0].toMaybeString(),
+                let newCursor = Int(newCursorString),
+                let keysObjs = try arr[1].toMaybeArray()
+                else { throw Error("Invalid Redis response \(arr)") }
+            let keys = keysObjs.flatMap { try? $0.toString() }.filter { $0.hasPrefix("package::") }
+            let names = keys.flatMap { $0.components(separatedBy: "::").last }
+            
+            //call block with keys
+            try block(keys: names)
+            scanCount += 1
+            cursor = newCursor
+        }
         if cursor == 0 {
             break
         }
@@ -91,7 +94,7 @@ public func exportAllPackages() throws {
     try packagesJSONPath().rm()
     
     let db = try Redbird()
-    
+
     var processedNames: Set<String> = []
     try scanPackages(db: db, block: { (keys) in
         
