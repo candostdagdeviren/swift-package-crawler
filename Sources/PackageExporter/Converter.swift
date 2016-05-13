@@ -90,6 +90,9 @@ func scanPackages(db: Redbird, block: (keys: [String]) throws -> ()) throws {
 public func exportAllPackages() throws {
     
     //delete folders first
+    //TODO: only re-export files if they're not already there in the right
+    //revision, will probably require keeping around - in Redis - 
+    //a lastModified or something received from a stat call on the file)
     try packagesSwiftPath().rm()
     try packagesJSONPath().rm()
     

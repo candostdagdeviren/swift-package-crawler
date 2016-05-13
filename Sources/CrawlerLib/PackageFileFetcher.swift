@@ -11,6 +11,7 @@ import Jay
 import Redbird
 import Utils
 import POSIX
+import Foundation
 
 //FIXME: store the etags separately from the files, so that we don't
 //have to load the huge files from redis just to get the etag
@@ -145,7 +146,7 @@ public class PackageFileFetcher {
                 }
             })
             
-            print(" Verified \(names.count - toAdd.count) cached files")
+            print("[\(NSDate())] Verified \(names.count - toAdd.count) cached files")
 
             //add all the new data to db
             if !toAdd.isEmpty {
