@@ -16,13 +16,14 @@ import Redbird
 struct AllUniqueDependencies: Analysis {
     
     let db: Redbird
-    
-    func analyze(nextPackage: () throws -> Package?) throws {
+
+    func analyze(packageIterator: PackageIterator) throws {
         
         print("Starting AllUniqueDependencies analyzer...")
         
         var allDependencies: Set<Dependency> = []
-        while let package = try nextPackage() {
+        var it = packageIterator
+        while let package = try it.next() {
             let deps = package
                 .allDependencies
                 //filter out local deps

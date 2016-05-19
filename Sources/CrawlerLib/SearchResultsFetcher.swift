@@ -82,7 +82,7 @@ public struct SearchResultsFetcher {
         let max = Int.max
         var repos: Set<String> = []
         var noNewResultsPages = 0
-        let noNewResultThreshold = 9
+        let noNewResultThreshold = 200
         while page <= max {
             
             if noNewResultsPages >= noNewResultThreshold {

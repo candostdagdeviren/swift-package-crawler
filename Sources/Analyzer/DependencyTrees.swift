@@ -7,20 +7,12 @@
 //
 
 struct DependencyTrees: Analysis {
-        
-    func analyze(nextPackage: () throws -> Package?) throws {
+    
+    func analyze(packageIterator: PackageIterator) throws {
         
         print("Starting DependencyTrees analyzer...")
         
-        var directDeps: [String: [String]] = [:]
-        while let package = try nextPackage() {
-            let deps = package
-                .allDependencies
-                .filter { $0.url.lowercased().isRemoteGitURL() }
-            
-            let names = deps.map { $0.url.githubName() }
-            directDeps[package.remoteName] = names
-        }
+        let directDeps = try _directDependencies(packageIterator: packageIterator)
         
         //look at the histogram of dependencies
         dependencyCountHistogram(directDeps)
@@ -38,45 +30,6 @@ struct DependencyTrees: Analysis {
         transitiveDependencyAuthorTopChart(directDeps)
         
         print("Analyzed \(directDeps.count) packages")
-    }
-    
-    private func _transitiveDependees(_ directDeps: [String: [String]]) -> [String: Set<String>] {
-        var transitiveDependees: [String: Set<String>] = [:]
-        let directDependees = _dependees(directDependencies: directDeps)
-        var stack: Set<String> = [] //for cycle detection
-        
-        func _calculateTransitiveDependees(name: String) -> Set<String> {
-            //check the cache first
-            if let deps = transitiveDependees[name] {
-                return deps
-            }
-            
-//            print("+ \(name)?")
-            if stack.contains(name) {
-                //cycle detected
-                print("Cycle detected when re-adding \(name). Cycle between \(stack)")
-                return []
-            }
-            stack.insert(name)
-            
-            //by definition, transitive dependees are
-            //all direct dependees + their transitive dependees
-            let direct = directDependees[name] ?? []
-            let transDepsOfDeps = direct
-                .map { _calculateTransitiveDependees(name: $0) }
-                .reduce(Set<String>(), combine: { $0.union($1) })
-            let allDependees = direct.union(transDepsOfDeps)
-            transitiveDependees[name] = allDependees
-            
-            stack.remove(name)
-//            print("- \(name) -> \(allDependees.count)")
-            
-            return allDependees
-        }
-        
-        //run
-        directDependees.keys.forEach { _calculateTransitiveDependees(name: $0) }
-        return transitiveDependees
     }
     
     private func dependencyCountHistogram(_ directDeps: [String: [String]]) {
@@ -113,7 +66,7 @@ struct DependencyTrees: Analysis {
     }
     
     private func directDependencyAuthorTopChart(_ directDeps: [String: [String]]) {
-        let directDependees = _dependees(directDependencies: directDeps)
+        let directDependees = _directDependees(directDependencies: directDeps)
         let topCharts = getAuthorTopChartFromDependees(directDependees)
         let count = 10
         printMarkdownTable(title: "Top \(count) most popular authors of direct dependencies", headers: ["Rank", "# Dependees", "Author"], rowCount: count) {
@@ -152,7 +105,7 @@ struct DependencyTrees: Analysis {
     
     private func directDependenciesTopChart(_ directDeps: [String: [String]]) {
         
-        let dependees = _dependees(directDependencies: directDeps)
+        let dependees = _directDependees(directDependencies: directDeps)
         let topCharts = dependees
             .map { (key, value) -> (String, Int) in
                 return (key, value.count)
@@ -166,19 +119,7 @@ struct DependencyTrees: Analysis {
     }
     
     //MARK: Utils
-    
-    private func _dependees(directDependencies: [String: [String]]) -> [String: Set<String>] {
-        var dependees: [String: Set<String>] = [:]
-        directDependencies.forEach { (name: String, dependencies: [String]) in
-            dependencies.forEach({ (dependency) in
-                var d = dependees[dependency.lowercased()] ?? []
-                d.insert(name.lowercased())
-                dependees[dependency.lowercased()] = d
-            })
-        }
-        return dependees
-    }
-    
+        
     private func printMarkdownTable(title: String, headers: [String], rowCount: Int, row: (i: Int) -> [String]) {
         print("---------------------------------")
         print("")

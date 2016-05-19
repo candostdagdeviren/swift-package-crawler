@@ -50,6 +50,11 @@ public func packageJSONPath(name: String) throws -> String {
     return parent.addPathComponents(name)
 }
 
+public func analysisResultPath(name: String) throws -> String {
+    let parent = try resultsPath()
+    return parent.addPathComponents(name)
+}
+
 public func cacheRootPath() throws -> String {
     let path = (#file.pathComponents().dropLast(3) + ["Cache"]).joined(separator: "/")
     try path.mkdir()
@@ -68,6 +73,11 @@ public func packagesJSONPath() throws -> String {
     return path
 }
 
+public func resultsPath() throws -> String {
+    let path = try cacheRootPath().addPathComponents("Results")
+    try path.mkdir()
+    return path
+}
 
 extension String {
     public func pathComponents() -> [String] {

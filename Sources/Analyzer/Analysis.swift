@@ -10,7 +10,30 @@ import Utils
 import Redbird
 
 protocol Analysis {
-    func analyze(nextPackage: () throws -> Package?) throws
+    func analyze(packageIterator: PackageIterator) throws
+}
+
+struct PackageIterator {
+    
+    private let files: [String]
+    private var iterator: IndexingIterator<[String]>
+    
+    init(files: [String]) {
+        self.files = files
+        self.iterator = self.files.makeIterator()
+    }
+
+    typealias Element = Package
+    
+    mutating func next() throws -> Package? {
+        guard let fileName = iterator.next() else { return nil }
+        let package = try parseJSONPackage(path: fileName)
+        return package
+    }
+    
+    func makeNew() -> PackageIterator {
+        return PackageIterator(files: files)
+    }
 }
 
 func analyzeAllPackages() throws {
@@ -25,16 +48,12 @@ func analyzeAllPackages() throws {
         [
             AllUniqueDependencies(db: db),
             DependencyTrees(),
-            PkgConfigAnalysis()
+            PkgConfigAnalysis(),
+//            PkgConfigDependeesAnalysis()
             ]
     
+    let iterator = PackageIterator(files: files)
     try analyses.forEach { (analysis) in
-        var iterator = files.makeIterator()
-        try analysis.analyze(nextPackage: { () throws -> Package? in
-            guard let fileName = iterator.next() else { return nil }
-            let package = try parseJSONPackage(path: fileName)
-            return package
-        })
+        try analysis.analyze(packageIterator: iterator)
     }
-    
 }
