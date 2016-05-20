@@ -6,10 +6,12 @@
 //
 //
 
-import Utils
+import PackageExporterLib
+import Foundation
 
 do {
     try exportAllPackages()
 } catch {
     print(error)
+    exit(1)
 }

@@ -36,7 +36,7 @@ struct PackageIterator {
     }
 }
 
-func analyzeAllPackages() throws {
+public func analyzeAllPackages() throws {
     let root = try packagesJSONPath()
     let files = try root
         .ls()
@@ -49,7 +49,7 @@ func analyzeAllPackages() throws {
             AllUniqueDependencies(db: db),
             DependencyTrees(),
             PkgConfigAnalysis(),
-//            PkgConfigDependeesAnalysis()
+            PkgConfigDependeesAnalysis()
             ]
     
     let iterator = PackageIterator(files: files)

@@ -1,21 +1,23 @@
+//
+//  main.swift
+//  swift-package-crawler
+//
+//  Created by Honza Dvorsky on 5/20/16.
+//
+//
 
-//TODO: this will launch the server
-/*
-Main:
-- show simple index file, show link to the github repo for documentation of the API
+import Vapor
+import Environment
+import ServerLib
 
-Utils:
-- endpoint for getting a project's Package.swift: /packages/github/USER/NAME/manifest
-- endpoint for getting a project's Package.swift in JSON format: /packages/github/USER/NAME/manifest/json
+let app = Application()
 
-Stats:
-- endpoint for getting project's direct dependencies /packages/github/USER/NAME/stats/dependencies/direct
-- endpoint for getting project's transitive dependencies /packages/github/USER/NAME/stats/dependencies/transitive
-- endpoint for getting user's direct dependencies /packages/github/USER/stats/dependencies/direct
-- endpoint for getting user's transitive dependencies /packages/github/USER/stats/dependencies/transitive
+app.get("/") { request in
+    return "Find docs at https://github.com/czechboy0/swift-package-crawler"
+}
 
-Data queries:
-- endpoint for getting the list of GitHub project names /data/github/names (paging API)
-- endpoint for downloading the full dataset of Package.swift files /data/manifests/download
-- endpoint for downloading the full dataset of Package.swift files as JSON /download/manifests/download?format=json
-*/
+setupRoutes(app: app)
+
+let port = Int(Environment().getVar("PORT") ?? "8080")
+print("Starting app on port \(port)")
+app.start(port: port)

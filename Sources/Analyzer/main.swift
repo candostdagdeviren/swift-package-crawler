@@ -6,10 +6,14 @@
 //
 //
 
+import AnalyzerLib
+import Foundation
+
 do {
     try analyzeAllPackages()
 } catch {
     print(error)
+    exit(1)
 }
 
 
