@@ -1,5 +1,5 @@
 //
-//  SearchResultsFetcher.swift
+//  PackageSearcher.swift
 //  swift-package-crawler
 //
 //  Created by Honza Dvorsky on 5/9/16.
@@ -10,8 +10,9 @@ import XML
 import HTTPSClient
 import Redbird
 import Utils
+import Foundation
 
-public struct SearchResultsFetcher {
+public struct PackageSearcher {
     
     public init() { }
     
@@ -23,7 +24,7 @@ public struct SearchResultsFetcher {
     private func fetchPage(client: Client, query: String, page: Int) throws -> [String] {
         
         let path = makePath(query: query, page: page)
-        print("Fetching page \(page)", terminator: " ... ")
+        print("[\(NSDate())] Fetching page \(page)", terminator: " ... ")
         let headers: Headers = [
               "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/602.1.29 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17",
               "Referer":"https://github.com/search?l=swift&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&type=Code&utf8=%E2%9C%93",
@@ -75,7 +76,8 @@ public struct SearchResultsFetcher {
     public func crawlRepoNames(db: Redbird) throws {
         
         let uri = URI(scheme: "https", host: "github.com", port: 443)
-        let client = try Client(uri: uri)
+        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
+        let client = try Client(uri: uri, configuration: config)
         let query = "Package.swift+language%3ASwift+in%3Apath+path%3A%2F"
         
         var page = 1
@@ -90,21 +92,29 @@ public struct SearchResultsFetcher {
                 print("Stopping, no new results in the last \(noNewResultThreshold) pages")
                 break
             }
-
+            
             do {
-                let fetched = try fetchPage(client: client, query: query, page: page)
-                if !fetched.isEmpty {
-                    let counts = try insertIntoDb(db: db, newlyFetched: fetched)
-                    print("New added: \(counts.added), Total Count: \(counts.total)")
-                    repos = repos.union(fetched)
-                    if counts.added > 0 {
-                        noNewResultsPages = 0
-                    } else {
-                        noNewResultsPages += 1
+                func _fetch() throws {
+                    let fetched = try fetchPage(client: client, query: query, page: page)
+                    if !fetched.isEmpty {
+                        let counts = try insertIntoDb(db: db, newlyFetched: fetched)
+                        print("New added: \(counts.added), Total Count: \(counts.total)")
+                        repos = repos.union(fetched)
+                        if counts.added > 0 {
+                            noNewResultsPages = 0
+                        } else {
+                            noNewResultsPages += 1
+                        }
                     }
+                    page += 1
+                    sleep(1)
                 }
-                page += 1
-                sleep(1)
+                do {
+                    try _fetch()
+                } catch SystemError.operationTimedOut {
+                    print("Timed out, retrying")
+                    try _fetch()
+                }
             } catch CrawlError.got429 {
                 let sleepDuration: UInt32 = 20
                 print("Stopping for \(sleepDuration) seconds")

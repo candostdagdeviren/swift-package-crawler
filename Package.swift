@@ -4,13 +4,15 @@ let package = Package(
     name: "swift-package-crawler",
     targets: [
     	Target(name: "Utils"),
-    	Target(name: "CrawlerLib", dependencies: [.Target(name: "Utils")]),
-        Target(name: "Crawler", dependencies: [.Target(name: "CrawlerLib")]),
+        Target(name: "PackageCrawlerLib", dependencies: [.Target(name: "Utils")]),
+        Target(name: "PackageCrawler", dependencies: [.Target(name: "PackageCrawlerLib")]),
+        Target(name: "PackageSearcherLib", dependencies: [.Target(name: "Utils")]),
+        Target(name: "PackageSearcher", dependencies: [.Target(name: "PackageSearcherLib")]),
         Target(name: "PackageExporterLib", dependencies: [.Target(name: "Utils")]),
         Target(name: "PackageExporter", dependencies: [.Target(name: "PackageExporterLib")]),
-        Target(name: "AnalyzerLib", dependencies: [.Target(name: "Utils"), .Target(name: "CrawlerLib")]),
+        Target(name: "AnalyzerLib", dependencies: [.Target(name: "Utils"), .Target(name: "PackageSearcherLib")]),
         Target(name: "Analyzer", dependencies: [.Target(name: "AnalyzerLib")]),
-        Target(name: "ServerLib", dependencies: [.Target(name: "Utils"), .Target(name: "CrawlerLib")]),
+        Target(name: "ServerLib", dependencies: [.Target(name: "Utils")]),
         Target(name: "Server", dependencies: [.Target(name: "ServerLib")])
     ],
     dependencies: [

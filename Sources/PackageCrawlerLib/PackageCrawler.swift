@@ -1,5 +1,5 @@
 //
-//  PackageFileFetcher.swift
+//  PackageCrawler.swift
 //  swift-package-crawler
 //
 //  Created by Honza Dvorsky on 5/9/16.
@@ -16,7 +16,7 @@ import Foundation
 //FIXME: store the etags separately from the files, so that we don't
 //have to load the huge files from redis just to get the etag
 
-public class PackageFileFetcher {
+public class PackageCrawler {
 
     public init() { }
 
@@ -26,7 +26,8 @@ public class PackageFileFetcher {
             return cl
         }
         let uri = URI(scheme: "https", host: "api.github.com", port: 443)
-        let client = try Client(uri: uri)
+        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
+        let client = try Client(uri: uri, configuration: config)
         _githubAPIClient = client
         return client
     }
@@ -37,7 +38,8 @@ public class PackageFileFetcher {
             return cl
         }
         let uri = URI(scheme: "https", host: "raw.githubusercontent.com", port: 443)
-        let client = try Client(uri: uri)
+        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
+        let client = try Client(uri: uri, configuration: config)
         _packageFileClient = client
         return client
     }
@@ -126,21 +128,30 @@ public class PackageFileFetcher {
                     }
                 }
                 
-                do {
+                func _fetch() throws {
                     let result = try self.fetchPackageFile(client: client, name: name, etag: etag ?? "")
                     switch result {
                     case .FileContents(let contents, let etag):
                         toAdd.append((name, etag, contents))
                     case .Unchanched: break //nothing to do
                     }
-//                    print(".", terminator: "")
+                }
+                
+                do {
+                    try _fetch()
                 } catch CrawlError.got404 {
                     print("Got 404 for package \(name), removing it from our list")
                     try deletePackage(db: db, name: name)
                 } catch SystemError.operationTimedOut {
-                    print("Connection timed out")
-                    //is this a TCPSSL bug or what? 
-                    //TODO: refactor & autoretry once
+                    print("Connection timed out, retrying")
+                    //is this a TCPSSL bug or what?
+                    //TODO: refactor & autoretry once but nicely (hacked below)
+
+                    do {
+                        try _fetch()
+                    } catch {
+                        print("Error when fetching \(name): \(error)")
+                    }
                 } catch {
                     print("\(name) -> \(error)")
                 }
