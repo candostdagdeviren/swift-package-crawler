@@ -8,6 +8,22 @@
 
 import Foundation
 import Redbird
+import S4
+import gzip
+
+public func headersWithGzip() -> Headers {
+    return ["Accept-Encoding": "gzip"]
+}
+
+public func decodeResponseData(response: Response) throws -> Data {
+    var resp = response
+    let buffer = try resp.body.becomeBuffer()
+    guard response.headers["Content-Encoding"] == "gzip" || response.headers["Transfer-Encoding"] == "gzip" else {
+        return buffer
+    }
+    return try buffer.gzipUncompressed()
+}
+
 
 public enum CrawlError: ErrorProtocol {
     case got404 //that's the end, finish this crawling session

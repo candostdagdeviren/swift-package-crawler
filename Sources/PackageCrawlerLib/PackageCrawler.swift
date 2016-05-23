@@ -48,12 +48,12 @@ public class PackageCrawler {
         
         let path = "/repos\(repoName)"
         let client = try githubAPIClient()
-        var response = try client.get(path)
+        let response = try client.get(path, headers: headersWithGzip())
         
         switch response.status.statusCode {
         case 200:
             //parse response
-            let bytes = try response.body.becomeBuffer().bytes
+            let bytes = try decodeResponseData(response: response).bytes
             if
                 let dict = try Jay().jsonFromData(bytes) as? [String: Any],
                 let branch = dict["default_branch"] as? String
@@ -78,14 +78,15 @@ public class PackageCrawler {
         let path = "\(name)/\(branch)/Package.swift"
         
         //attach etag and handle 304 properly
-        let headers: Headers = ["If-None-Match": Header(etag)]
-        var response = try client.get(path, headers: headers)
+        var headers: Headers = headersWithGzip()
+        headers["If-None-Match"] = Header(etag)
+        let response = try client.get(path, headers: headers)
         
         switch response.status.statusCode {
         case 304: //not changed
             return .Unchanched
         case 200:
-            let contents = String(try response.body.becomeBuffer())
+            let contents = String(try decodeResponseData(response: response))
             let etag = response.headers["ETag"].values.first ?? ""
             return FetchPackageResult.FileContents(contents: contents, etag: etag)
         case 404:

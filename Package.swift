@@ -22,6 +22,7 @@ let package = Package(
         .Package(url: "https://github.com/czechboy0/Jay.git", majorVersion: 0, minor: 8),
         .Package(url: "https://github.com/czechboy0/Tasks.git", majorVersion: 0, minor: 1),
         .Package(url: "https://github.com/czechboy0/Environment.git", majorVersion: 0, minor: 3),
-        .Package(url: "https://github.com/qutheory/vapor.git", majorVersion: 0, minor: 0)
+        .Package(url: "https://github.com/qutheory/vapor.git", majorVersion: 0, minor: 0),
+        .Package(url: "https://github.com/Zewo/gzip.git", majorVersion: 0, minor: 1)
     ]
 )

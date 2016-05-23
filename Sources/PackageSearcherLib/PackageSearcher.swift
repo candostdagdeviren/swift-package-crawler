@@ -25,11 +25,10 @@ public struct PackageSearcher {
         
         let path = makePath(query: query, page: page)
         print("[\(NSDate())] Fetching page \(page)", terminator: " ... ")
-        let headers: Headers = [
-              "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/602.1.29 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17",
-              "Referer":"https://github.com/search?l=swift&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&type=Code&utf8=%E2%9C%93",
-              "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        ]
+        var headers: Headers = headersWithGzip()
+        headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/602.1.29 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17"
+        headers["Referer"] = "https://github.com/search?l=swift&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&type=Code&utf8=%E2%9C%93"
+        headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         
         func _fetch() throws -> Response {
             do {
@@ -52,7 +51,7 @@ public struct PackageSearcher {
         default: throw Error("\(response.status)")
         }
         
-        let data = try response.body.becomeBuffer()
+        let data = try decodeResponseData(response: response)
         guard let doc = XMLDocument(htmlData: data) else { throw Error("Incorrect") }
         
         func classSelector(_ className: String) -> String {
