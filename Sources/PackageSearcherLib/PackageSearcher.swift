@@ -31,7 +31,18 @@ public struct PackageSearcher {
               "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         ]
         
-        var response = try client.get(path, headers: headers)
+        func _fetch() throws -> Response {
+            do {
+                let response = try client.get(path, headers: headers)
+                return response
+            } catch {
+                //one retry
+                let response = try client.get(path, headers: headers)
+                return response
+            }
+        }
+        
+        var response = try _fetch()
         let status = response.status.statusCode
         print(status, terminator: " -> ")
         switch status {
@@ -107,7 +118,7 @@ public struct PackageSearcher {
                         }
                     }
                     page += 1
-                    sleep(1)
+                    // sleep(1)
                 }
                 do {
                     try _fetch()
@@ -116,7 +127,7 @@ public struct PackageSearcher {
                     try _fetch()
                 }
             } catch CrawlError.got429 {
-                let sleepDuration: UInt32 = 20
+                let sleepDuration: UInt32 = 10
                 print("Stopping for \(sleepDuration) seconds")
                 sleep(sleepDuration)
                 print("Continuing")
