@@ -6,18 +6,18 @@
 //
 //
 
-import Vapor
-import Environment
-import ServerLib
+// import Vapor
+// import Environment
+// import ServerLib
 
-let app = Application()
+// let app = Application()
 
-app.get("/") { request in
-    return "Find docs at https://github.com/czechboy0/swift-package-crawler"
-}
+// app.get("/") { request in
+//     return "Find docs at https://github.com/czechboy0/swift-package-crawler"
+// }
 
-setupRoutes(app: app)
+// setupRoutes(app: app)
 
-let port = Int(Environment().getVar("PORT") ?? "8080")
-print("Starting app on port \(port)")
-app.start(port: port)
+// let port = Int(Environment().getVar("PORT") ?? "8080")
+// print("Starting app on port \(port)")
+// app.start(port: port)

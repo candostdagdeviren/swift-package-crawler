@@ -6,10 +6,10 @@
 //
 //
 
-import Vapor
+// import Vapor
 
-public func setupRoutes(app: Application) {
+// public func setupRoutes(app: Application) {
     
-    ManifestController().setupRoutes(app: app)
+//     ManifestController().setupRoutes(app: app)
     
-}
+// }
