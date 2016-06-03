@@ -20,11 +20,12 @@ func convertPackageToJSON(name: String) throws {
     
     let packagePath = try packageSwiftPath(name: name)
     let jsonPath = try packageJSONPath(name: name)
-    
-    //Soon in SwiftPM: https://github.com/apple/swift-package-manager/pull/333
+    let swiftPath = "/Library/Developer/Toolchains/swift-DEVELOPMENT-SNAPSHOT-2016-05-31-a.xctoolchain/usr/bin/swift"
     let args: [String] = [
-                             "/Users/honzadvorsky/Documents/swift-repos/swiftpm/.build/debug/swift-build",
-                             "--dump-package",
+                             swiftPath,
+                             "package",
+                             "dump-package",
+                             "--output", //TODO: change to --input once my PR gets merged
                              packagePath
     ]
     let result = try Task.run(args)
