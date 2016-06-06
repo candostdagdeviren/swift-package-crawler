@@ -79,7 +79,7 @@ public class PackageCrawler {
         
         //attach etag and handle 304 properly
         var headers: Headers = headersWithGzip()
-        headers["If-None-Match"] = Header(etag)
+        headers["If-None-Match"] = etag
         let response = try client.get(path, headers: headers)
         
         switch response.status.statusCode {
@@ -87,7 +87,7 @@ public class PackageCrawler {
             return .Unchanched
         case 200:
             let contents = String(try decodeResponseData(response: response))
-            let etag = response.headers["ETag"].values.first ?? ""
+            let etag = response.headers["ETag"] ?? ""
             return FetchPackageResult.FileContents(contents: contents, etag: etag)
         case 404:
             throw CrawlError.got404
