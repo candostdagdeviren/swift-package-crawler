@@ -55,11 +55,14 @@ struct Package {
     let pkgConfig: String?
     let providers: [[String: String]]?
     
+    let originalJSON: [String: Any]
+    
     //extras
     let remoteName: String
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
     init(json: [String: Any], remoteName: (String, String)) throws {
+        self.originalJSON = json
         if let name = json["name"] as? String {
             self.name = name
         } else {

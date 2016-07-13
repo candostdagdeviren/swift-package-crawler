@@ -46,6 +46,7 @@ public func analyzeAllPackages() throws {
     
     let analyses: [Analysis] =
         [
+            NoNamePackagesAnalysis(),
             AllUniqueDependencies(db: db),
             DependencyTrees(),
             PkgConfigAnalysis(),

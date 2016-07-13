@@ -17,7 +17,6 @@ struct PkgConfigDependeesAnalysis: Analysis {
         print("Starting PkgConfigDependeesAnalysis analyzer...")
         
         try pkgConfigDependencyAnalysis(packageIterator: packageIterator)
-        
     }
     
     private func getWithPkgConfig(packageIterator: PackageIterator) throws -> [Package] {
@@ -37,10 +36,6 @@ struct PkgConfigDependeesAnalysis: Analysis {
         
         //first just print names of the packages that have a pkgConfig key
         let sortedNames = withPkgConfig.map { $0.remoteName.lowercased() }.sorted()
-        print("Packages with PkgConfig key:")
-        sortedNames.forEach {
-            print(" -> \($0)")
-        }
         
         //get direct and transitive dependees
         let directDependencies = try _directDependencies(packageIterator: packageIterator)
@@ -58,7 +53,7 @@ struct PkgConfigDependeesAnalysis: Analysis {
         }
         
         let path = try analysisResultPath(name: "PkgConfigDependees.json")
-        let jsonData = try Jay().dataFromJson(results)
+        let jsonData = try Jay(formatting: .prettified).dataFromJson(results)
         let jsonString = try jsonData.string()
         try jsonString.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
         print("Printed results to \(path)")

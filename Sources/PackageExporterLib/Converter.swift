@@ -20,7 +20,7 @@ func convertPackageToJSON(name: String) throws {
     
     let packagePath = try packageSwiftPath(name: name)
     let jsonPath = try packageJSONPath(name: name)
-    let swiftPath = "/Library/Developer/Toolchains/swift-DEVELOPMENT-SNAPSHOT-2016-05-31-a.xctoolchain/usr/bin/swift"
+    let swiftPath = "/Library/Developer/Toolchains/swift-DEVELOPMENT-SNAPSHOT-2016-06-06-a.xctoolchain/usr/bin/swift"
     let args: [String] = [
                              swiftPath,
                              "package",

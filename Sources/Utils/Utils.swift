@@ -10,6 +10,7 @@ import Foundation
 import Redbird
 import S4
 import gzip
+import Jay
 
 public func headersWithGzip() -> Headers {
     return ["Accept-Encoding": "gzip"]
@@ -172,4 +173,12 @@ extension Double {
 public func deletePackage(db: Redbird, name: String) throws {
     try db.command("DEL", params: ["package::\(name)"])
     try db.command("SREM", params: ["github_names", "\(name)"])
+}
+
+extension Collection where Iterator.Element == UInt8 {
+    
+    public func write(to path: String) throws {
+        let string = try self.string()
+        try string.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+    }
 }
