@@ -6,7 +6,12 @@
 //
 //
 
+import Redbird
+import Utils
+
 struct DependencyTrees: Analysis {
+    
+    let db: Redbird
     
     func analyze(packageIterator: PackageIterator) throws {
         
@@ -15,24 +20,31 @@ struct DependencyTrees: Analysis {
         let directDeps = try _directDependencies(packageIterator: packageIterator)
         
         //look at the histogram of dependencies
-        dependencyCountHistogram(directDeps)
+        let number_of_dependencies_histogram_stat = dependencyCountHistogram(directDeps)
+        try saveStat(db: db, name: "number_of_dependencies_histogram_stat", value: number_of_dependencies_histogram_stat)
         
         //find most popular direct dependencies
-        directDependenciesTopChart(directDeps)
-        
+        let most_popular_direct_dependencies_stat = directDependenciesTopChart(directDeps)
+        try saveStat(db: db, name: "most_popular_direct_dependencies_stat", value: most_popular_direct_dependencies_stat)
+
         //find most popular indirect/transitive dependencies (reach)
-        transitiveDependenciesTopChart(directDeps)
-        
+        let most_popular_transitive_dependencies_stat = transitiveDependenciesTopChart(directDeps)
+        try saveStat(db: db, name: "most_popular_transitive_dependencies_stat", value: most_popular_transitive_dependencies_stat)
+
         //find most popular author's of direct dependencies
-        directDependencyAuthorTopChart(directDeps)
+        let most_popular_authors_direct_dependencies_stat = directDependencyAuthorTopChart(directDeps)
+        try saveStat(db: db, name: "most_popular_authors_direct_dependencies_stat", value: most_popular_authors_direct_dependencies_stat)
 
         //find most popular author's of transitive dependencies
-        transitiveDependencyAuthorTopChart(directDeps)
+        let most_popular_authors_transitive_dependencies_stat = transitiveDependencyAuthorTopChart(directDeps)
+        try saveStat(db: db, name: "most_popular_authors_transitive_dependencies_stat", value: most_popular_authors_transitive_dependencies_stat)
+
+        try saveStat(db: db, name: "package_count", value: String(directDeps.count))
         
         print("Analyzed \(directDeps.count) packages")
     }
     
-    private func dependencyCountHistogram(_ directDeps: [String: [String]]) {
+    private func dependencyCountHistogram(_ directDeps: [String: [String]]) -> String {
         
         let counts = directDeps.map { $0.value.count }
         var histogram: [Int: Int] = [:]
@@ -42,7 +54,7 @@ struct DependencyTrees: Analysis {
         
         let total = histogram.values.reduce(0, combine: +)
         let keys = histogram.keys.sorted()
-        printMarkdownTable(title: "Dependency histogram", headers: ["# Dependencies", "# Packages", "% of Total"], rowCount: histogram.count) {
+        return makeMarkdownTable(title: "Dependency histogram", headers: ["# Dependencies", "# Packages", "% of Total"], rowCount: histogram.count) {
             let key = keys[$0]
             let count = histogram[key]!
             let percent = count.percentOf(total)
@@ -50,7 +62,7 @@ struct DependencyTrees: Analysis {
         }
     }
     
-    private func transitiveDependenciesTopChart(_ directDeps: [String: [String]]) {
+    private func transitiveDependenciesTopChart(_ directDeps: [String: [String]]) -> String {
         
         let transitiveDependees = _transitiveDependees(directDeps)
         let topCharts = transitiveDependees
@@ -59,27 +71,27 @@ struct DependencyTrees: Analysis {
             }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
         
         let count = 10
-        printMarkdownTable(title: "Top \(count) most popular transitive dependencies", headers: ["Rank", "# Dependees", "Name"], rowCount: count) {
+        return makeMarkdownTable(title: "Top \(count) most popular transitive dependencies", headers: ["Rank", "# Dependees", "Name"], rowCount: count) {
             let item = topCharts[$0]
             return [($0+1).leftPad(3)+".", item.1.leftPad(3), item.0.markdownGithubRepoLink()]
         }
     }
     
-    private func directDependencyAuthorTopChart(_ directDeps: [String: [String]]) {
+    private func directDependencyAuthorTopChart(_ directDeps: [String: [String]]) -> String {
         let directDependees = _directDependees(directDependencies: directDeps)
         let topCharts = getAuthorTopChartFromDependees(directDependees)
         let count = 10
-        printMarkdownTable(title: "Top \(count) most popular authors of direct dependencies", headers: ["Rank", "# Dependees", "Author"], rowCount: count) {
+        return makeMarkdownTable(title: "Top \(count) most popular authors of direct dependencies", headers: ["Rank", "# Dependees", "Author"], rowCount: count) {
             let item = topCharts[$0]
             return [($0+1).leftPad(3)+".", item.1.leftPad(3), item.0.markdownGithubUserLink()]
         }
     }
     
-    private func transitiveDependencyAuthorTopChart(_ directDeps: [String: [String]]) {
+    private func transitiveDependencyAuthorTopChart(_ directDeps: [String: [String]]) -> String {
         let transitiveDependees = _transitiveDependees(directDeps)
         let topCharts = getAuthorTopChartFromDependees(transitiveDependees)
         let count = 10
-        printMarkdownTable(title: "Top \(count) most popular authors of transitive dependencies", headers: ["Rank", "# Dependees", "Author"], rowCount: count) {
+        return makeMarkdownTable(title: "Top \(count) most popular authors of transitive dependencies", headers: ["Rank", "# Dependees", "Author"], rowCount: count) {
             let item = topCharts[$0]
             return [($0+1).leftPad(3)+".", item.1.leftPad(3), item.0.markdownGithubUserLink()]
         }
@@ -103,7 +115,7 @@ struct DependencyTrees: Analysis {
         return topCharts
     }
     
-    private func directDependenciesTopChart(_ directDeps: [String: [String]]) {
+    private func directDependenciesTopChart(_ directDeps: [String: [String]]) -> String {
         
         let dependees = _directDependees(directDependencies: directDeps)
         let topCharts = dependees
@@ -112,7 +124,7 @@ struct DependencyTrees: Analysis {
             }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
         
         let count = 10
-        printMarkdownTable(title: "Top \(count) most popular direct dependencies", headers: ["Rank", "# Dependees", "Name"], rowCount: count) {
+        return makeMarkdownTable(title: "Top \(count) most popular direct dependencies", headers: ["Rank", "# Dependees", "Name"], rowCount: count) {
             let item = topCharts[$0]
             return [($0+1).leftPad(3)+".", item.1.leftPad(3), item.0.markdownGithubRepoLink()]
         }
@@ -120,23 +132,31 @@ struct DependencyTrees: Analysis {
     
     //MARK: Utils
         
-    private func printMarkdownTable(title: String, headers: [String], rowCount: Int, row: (i: Int) -> [String]) {
-        print("---------------------------------")
-        print("")
-        print(title)
+    private func makeMarkdownTable(title: String, headers: [String], rowCount: Int, row: (i: Int) -> [String]) -> String {
+        
+        var output: String = ""
+        
         let columnCount = headers.count
         let head = ([""] + headers.map { " \($0) " } + [""]).joined(separator: "|")
-        print(head)
+        output.appendLine(head)
         let headLine = ([""] + headers.map { _ in " --- " } + [""]).joined(separator: "|")
-        print(headLine)
+        output.appendLine(headLine)
         for i in 0...rowCount-1 {
             let rowData = row(i: i)
             assert(columnCount == rowData.count, "Number of headers and row columns must match")
             let line = ([""] + rowData.map { " \($0) " } + [""]).joined(separator: "|")
-            print(line)
+            output.appendLine(line)
         }
-        print("")
-        print("---------------------------------")
+        
+        return output
+    }
+    
+}
+
+extension String {
+    mutating func appendLine(_ line: String) {
+        let ln = line.appending("\n")
+        self = appending(ln)
     }
 }
 

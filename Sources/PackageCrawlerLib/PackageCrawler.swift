@@ -91,6 +91,8 @@ public class PackageCrawler {
             return FetchPackageResult.FileContents(contents: contents, etag: etag)
         case 404:
             throw CrawlError.got404
+        case 503:
+            throw CrawlError.got503
         default:
             throw Error(String(response.status))
         }
@@ -138,21 +140,35 @@ public class PackageCrawler {
                     }
                 }
                 
-                do {
-                    try _fetch()
-                } catch CrawlError.got404 {
-                    print("Got 404 for package \(name), removing it from our list")
-                    try deletePackage(db: db, name: name)
-                } catch SystemError.operationTimedOut {
-                    print("Connection timed out, retrying")
+                func _retry(error: String) {
+                    print("Connection failed with error \(error), retrying")
                     //is this a TCPSSL bug or what?
                     //TODO: refactor & autoretry once but nicely (hacked below)
-
+                    
                     do {
                         try _fetch()
                     } catch {
                         print("Error when fetching \(name): \(error)")
                     }
+                }
+                
+                func _delete(error: String) throws {
+                    print("Got \(error) for package \(name), removing it from our list")
+                    try deletePackage(db: db, name: name)
+                }
+                
+                do {
+                    try _fetch()
+                } catch CrawlError.got404 {
+                    try _delete(error: "404")
+                } catch C7.StreamError.closedStream {
+                    try _delete(error: "closedStream")
+                } catch SystemError.operationTimedOut {
+                    _retry(error: "timed out")
+                } catch CrawlError.got503 {
+                    _retry(error: "503")
+                } catch HTTPSClient.ClientError.brokenConnection {
+                    _retry(error: "brokenConnection")
                 } catch {
                     print("\(name) -> \(error)")
                 }

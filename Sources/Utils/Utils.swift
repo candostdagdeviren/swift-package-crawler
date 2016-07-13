@@ -11,6 +11,7 @@ import Redbird
 import S4
 import gzip
 import Jay
+import Tasks
 
 public func headersWithGzip() -> Headers {
     return ["Accept-Encoding": "gzip"]
@@ -29,6 +30,7 @@ public func decodeResponseData(response: Response) throws -> Data {
 public enum CrawlError: ErrorProtocol {
     case got404 //that's the end, finish this crawling session
     case got429 //too many requests, back off
+    case got503 //service unavailable, retry
 }
 
 public struct Error: ErrorProtocol {
@@ -169,6 +171,14 @@ extension Double {
     }
 }
 
+public func saveStat(db: Redbird, name: String, value: String) throws {
+    try db.command("SET", params: ["stat::\(name)", value])
+}
+
+public func readStat(db: Redbird, name: String) throws -> String {
+    let resp = try db.command("GET", params: ["stat::\(name)"]).toString()
+    return resp
+}
 
 public func deletePackage(db: Redbird, name: String) throws {
     try db.command("DEL", params: ["package::\(name)"])
@@ -180,5 +190,51 @@ extension Collection where Iterator.Element == UInt8 {
     public func write(to path: String) throws {
         let string = try self.string()
         try string.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+    }
+}
+
+struct TaskError: ErrorProtocol, CustomStringConvertible {
+    
+    let taskResult: TaskResult
+    let comment: String
+    init(_ comment: String, _ taskResult: TaskResult) {
+        self.taskResult = taskResult
+        self.comment = comment
+    }
+    
+    var description: String {
+        return "Error: \(comment): \(taskResult)"
+    }
+}
+
+public func ifChangesCommitAndPush(repoPath: String) throws {
+    
+    let gitStatus = try Task.run(["git", "status", "--porcelain"], pwd: repoPath)
+    guard gitStatus.code == 0 else {
+        throw TaskError("Failed to check for changes", gitStatus)
+    }
+    
+    guard !gitStatus.stdout.isEmpty else {
+        print("No changes, exiting...")
+        return
+    }
+    
+    let addResult = try Task.run(["git", "add", "."], pwd: repoPath)
+    guard addResult.code == 0 else {
+        throw TaskError("Failed to git add all changes", addResult)
+    }
+    
+    let dateFormatter = NSDateFormatter()
+    dateFormatter.dateFormat = "'on' yyyy-MM-dd 'at' HH:mm"
+    let commitMessage = "Updated data \(dateFormatter.string(from: NSDate()))"
+    
+    let commitResult = try Task.run(["git", "commit", "-am", "\(commitMessage)"], pwd: repoPath)
+    guard commitResult.code == 0 else {
+        throw TaskError("Failed to commit changes", commitResult)
+    }
+    
+    let pushResult = try Task.run(["git", "push", "origin", "master"], pwd: repoPath)
+    guard pushResult.code == 0 else {
+        throw TaskError("Failed to push changes", pushResult)
     }
 }
