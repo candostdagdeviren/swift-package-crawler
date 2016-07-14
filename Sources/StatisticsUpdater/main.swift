@@ -2,6 +2,7 @@
 import Utils
 import Redbird
 import Foundation
+import Templater
 
 func updateStats(db: Redbird) throws {
     
@@ -35,7 +36,7 @@ func updateStats(db: Redbird) throws {
                       "most_popular_authors_direct_dependencies_stat": most_popular_authors_direct_dependencies_stat,
                       "most_popular_authors_transitive_dependencies_stat": most_popular_authors_transitive_dependencies_stat
                   ]
-    let report = try fillTemplate(template: template, context: context)
+    let report = try Template(template).fill(with: context)
     print("Generated markdown report")
     
     let statsRoot = try cacheRootPath()

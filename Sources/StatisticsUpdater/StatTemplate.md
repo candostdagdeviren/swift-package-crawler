@@ -16,27 +16,27 @@ Automatically crawled from GitHub using my [swift-package-crawler](https://githu
 
 ## Most popular direct dependencies
 **Question**: "Which packages are the most popular direct dependencies?"  
-**Answer**: "Web server frameworks from qutheory, IBM and Zewo."  
+**Answer**: "Web server frameworks from qutheory, IBM and Open Swift."    
 **Comments**: *Many of these are depended on by packages from the same owner, so these results might not exactly reflect the number of unique developers who choose to import these libraries.*  
 
 {{ most_popular_direct_dependencies_stat }}
 
 ## Most popular indirect (transitive) dependencies
 **Question**: "Which are the most used packages? How many projects does my package run in?"  
-**Answer**: "Swift server utilities by Zewo and friends."  
+**Answer**: "Swift server utilities by Zewo and Open Swift."    
 **Comments**: *Think of this as the number of projects that compile your package as part of their build process. The 'reach' of your code. Or, a cynic would see this as the number of projects you can break by deleting your project from GitHub.*  
 
 {{ most_popular_transitive_dependencies_stat }}
 
 ## Most popular authors of direct dependencies
 **Question**: "Who creates the most popular directly-used packages?  
-**Answer**: "Zewo, IBM, qutheory and kylef."    
+**Answer**: "Zewo, IBM, qutheory, kylef and Open Swift."    
 
 {{ most_popular_authors_direct_dependencies_stat }}
 
 ## Most popular authors of transitive dependencies
 **Question**: "Who creates the most used packages? Who's code are most packages running on?  
-**Answer**: "open-swift started as a collaboration between qutheory and Zewo, so it's great to see that even among competition there are awesome things to be had when people work together. And Zewo (in the second place here) is the powerhorse behind the tens of tiny frameworks that most new serverside Swift code runs on."    
+**Answer**: "Open Swift started as a collaboration between qutheory and Zewo, so it's great to see that even among competition there are awesome things to be had when people work together. And Zewo (in the second place here) is the powerhorse behind the tens of tiny frameworks that most new serverside Swift code runs on."    
 
 {{ most_popular_authors_transitive_dependencies_stat }}
 
