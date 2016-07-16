@@ -80,6 +80,20 @@ public struct PackageSearcher {
         let total = try resp[1].toInt()
         return (added, total)
     }
+    
+    public func oneTimeInjectListOfNames(db: Redbird, names: [String]) throws {
+        
+        print("One time injecting \(names.count) names")
+        
+        //verify that all names have a slash prefix
+        let correctNames = names.map { (name: String) -> String in
+            if name.hasPrefix("/") { return name }
+            return "/\(name)"
+        }
+        
+        let (added, total) = try insertIntoDb(db: db, newlyFetched: correctNames)
+        print("Added \(added) new ones, total \(total) names")
+    }
 
     //crawl github for repositories which have a Package.swift at their root
     //and are written in swift

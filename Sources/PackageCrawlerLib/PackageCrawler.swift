@@ -100,13 +100,13 @@ public class PackageCrawler {
 
     private func fetchPackageFile(client: Client, name: String, etag: String) throws -> FetchPackageResult {
         
-        do {
+        // do {
             return try _fetchPackageFile(client: client, name: name, etag: etag, branch: "master")
-        } catch CrawlError.got404 {
-            //maybe default branch has a different name
-            let defaultBranch = try getDefaultBranch(repoName: name)
-            return try _fetchPackageFile(client: client, name: name, etag: etag, branch: defaultBranch)
-        }
+        // } catch CrawlError.got404 {
+        //     //maybe default branch has a different name
+        //     let defaultBranch = try getDefaultBranch(repoName: name)
+        //     return try _fetchPackageFile(client: client, name: name, etag: etag, branch: defaultBranch)
+        // }
     }
 
     
@@ -151,6 +151,12 @@ public class PackageCrawler {
                         print("Error when fetching \(name): \(error)")
                     }
                 }
+
+                func _sleep(_ time: UInt32) {
+                    print("Stopping for \(time) seconds")
+                    sleep(time)
+                    print("Continuing")
+                }
                 
                 func _delete(error: String) throws {
                     print("Got \(error) for package \(name), removing it from our list")
@@ -162,7 +168,8 @@ public class PackageCrawler {
                 } catch CrawlError.got404 {
                     try _delete(error: "404")
                 } catch C7.StreamError.closedStream {
-                    try _delete(error: "closedStream")
+                    _sleep(10)
+                    _retry(error: "timed out")
                 } catch SystemError.operationTimedOut {
                     _retry(error: "timed out")
                 } catch CrawlError.got503 {
