@@ -9,7 +9,7 @@ Automatically crawled from GitHub using my [swift-package-crawler](https://githu
 
 ## Number of dependencies
 **Question**: "How many dependencies do most packages have?"  
-**Answer**: "Over 50% has none, less than 25% has one and then it levels off. And yes, one package has 59 dependencies."  
+**Answer**: "Almost 60% have none, about 20% have one and then it levels off. And yes, one package has 59 dependencies."  
 **Comments**: *When observing these numbers over time, the dependency-less fraction of packages is slowly growing, which could mean that a lot of new original packages are being created, as opposed to finished products where people pull in reliable and tested libraries. This is probably normal for a young ecosystem, but it's great to see people creating original content and making it open source every day.*
 
 {{ number_of_dependencies_histogram_stat }}
