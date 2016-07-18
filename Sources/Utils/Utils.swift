@@ -13,6 +13,12 @@ import gzip
 import Jay
 import Tasks
 
+#if os(Linux)
+public func autoreleasepool(block: @noescape () throws -> ()) rethrows {
+    try block()
+}
+#endif
+
 public func headersWithGzip() -> Headers {
     return ["Accept-Encoding": "gzip"]
 }
