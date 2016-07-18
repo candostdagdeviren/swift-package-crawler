@@ -14,4 +14,4 @@ VOLUME /package
 
 # mount in local sources via:  -v $(PWD):/package
 
-CMD redis-server ./Redis/redis.conf && swift build -Xcc -I/usr/include/libxml2 && .build/debug/PackageSearcher && .build/debug/PackageCrawler && .build/debug/PackageExporter && .build/debug/Analyzer && .build/debug/DataUpdater && .build/debug/StatisticsUpdater
+CMD echo $PWD && ls -la && redis-server ./Redis/redis.conf && swift build -Xcc -I/usr/include/libxml2 && .build/debug/PackageSearcher && .build/debug/PackageCrawler && .build/debug/PackageExporter && .build/debug/Analyzer && .build/debug/DataUpdater && .build/debug/StatisticsUpdater
