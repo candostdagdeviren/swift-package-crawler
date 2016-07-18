@@ -3,7 +3,7 @@ FROM kylef/swiftenv
 RUN swiftenv install DEVELOPMENT-SNAPSHOT-2016-05-09-a
 
 # install redis
-RUN         cd /tmp && curl -O http://download.redis.io/redis-stable.tar.gz && tar xzvf redis-stable.tar.gz && cd redis-stable && make && make install
+RUN         cd /tmp && curl -O http://download.redis.io/redis-stable.tar.gz && tar xzvf redis-stable.tar.gz > /dev/null && cd redis-stable && make > /dev/null && make install > /dev/null
 
 # install openssl and libxml2
 RUN apt-get install -y libssl-dev
