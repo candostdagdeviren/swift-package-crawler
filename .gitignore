@@ -62,7 +62,6 @@ Carthage/Build
 fastlane/report.xml
 fastlane/screenshots
 
-Cache
 swift-package-crawler.xcodeproj
 
 

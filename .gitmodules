@@ -1,3 +1,6 @@
 [submodule "swiftpm-packages-statistics"]
 	path = swiftpm-packages-statistics
 	url = git@github.com:czechboy0/swiftpm-packages-statistics.git
+[submodule "Cache"]
+	path = Cache
+	url = git@github.com:czechboy0/swift-package-crawler-data.git
