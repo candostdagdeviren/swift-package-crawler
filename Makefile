@@ -1,4 +1,7 @@
 
+redis:
+	redis-server ./Redis/redis.conf
+
 build:
 	swift build
 
@@ -13,3 +16,5 @@ update:
 	.build/debug/StatisticsUpdater
 
 full: build recrawl update
+	@echo "Finished"
+

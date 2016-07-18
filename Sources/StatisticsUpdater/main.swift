@@ -41,7 +41,6 @@ func updateStats(db: Redbird) throws {
     
     let statsRoot = try cacheRootPath()
         .parentDirectory()
-        .parentDirectory()
         .addPathComponents("swiftpm-packages-statistics")
     let reportPath = statsRoot
         .addPathComponents("README.md")

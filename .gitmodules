@@ -1,0 +1,3 @@
+[submodule "swiftpm-packages-statistics"]
+	path = swiftpm-packages-statistics
+	url = git@github.com:czechboy0/swiftpm-packages-statistics.git
