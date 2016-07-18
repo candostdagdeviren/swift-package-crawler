@@ -15,4 +15,4 @@ EXPOSE 8080
 
 # mount in local sources via:  -v $(PWD):/package
 
-CMD redis-server ./Redis/redis.conf && swift build && .build/debug/PackageSearcher && .build/debug/PackageCrawler && .build/debug/PackageExporter && .build/debug/Analyzer && .build/debug/DataUpdater && .build/debug/StatisticsUpdater
+CMD redis-server ./Redis/redis.conf && swift build -Xcc -I/usr/include/libxml2 && .build/debug/PackageSearcher && .build/debug/PackageCrawler && .build/debug/PackageExporter && .build/debug/Analyzer && .build/debug/DataUpdater && .build/debug/StatisticsUpdater
