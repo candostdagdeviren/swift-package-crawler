@@ -4,7 +4,6 @@ RUN swiftenv install DEVELOPMENT-SNAPSHOT-2016-05-09-a
 
 # install redis
 RUN         cd /tmp && curl -O http://download.redis.io/redis-stable.tar.gz && tar xzvf redis-stable.tar.gz && cd redis-stable && make && make install
-EXPOSE      6379
 
 # install openssl and libxml2
 RUN apt-get install -y libssl-dev
@@ -16,4 +15,4 @@ EXPOSE 8080
 
 # mount in local sources via:  -v $(PWD):/package
 
-CMD swift build && .build/debug/PackageSearcher && .build/debug/PackageCrawler && .build/debug/PackageExporter && .build/debug/Analyzer && .build/debug/DataUpdater && .build/debug/StatisticsUpdater
+CMD redis-server ./Redis/redis.conf && swift build && .build/debug/PackageSearcher && .build/debug/PackageCrawler && .build/debug/PackageExporter && .build/debug/Analyzer && .build/debug/DataUpdater && .build/debug/StatisticsUpdater
