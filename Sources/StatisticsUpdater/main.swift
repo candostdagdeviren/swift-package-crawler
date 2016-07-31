@@ -9,13 +9,13 @@ func updateStats(db: Redbird) throws {
     let templatePath = #file.parentDirectory().addPathComponents("StatTemplate.md")
     let template = try String(contentsOfFile: templatePath)
     
-    let dateFormatter = NSDateFormatter()
+    let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd"
-    let date = dateFormatter.string(from: NSDate())
+    let date = dateFormatter.string(from: Date())
     
-    let monthFormatter = NSDateFormatter()
+    let monthFormatter = DateFormatter()
     monthFormatter.dateFormat = "MMMM yyyy"
-    let growthMonth = monthFormatter.string(from: NSDate())
+    let growthMonth = monthFormatter.string(from: Date())
     
     let number_of_dependencies_histogram_stat = try readStat(db: db, name: "number_of_dependencies_histogram_stat")
     let most_popular_direct_dependencies_stat = try readStat(db: db, name: "most_popular_direct_dependencies_stat")
@@ -44,7 +44,7 @@ func updateStats(db: Redbird) throws {
         .addPathComponents("swiftpm-packages-statistics")
     let reportPath = statsRoot
         .addPathComponents("README.md")
-    try report.write(toFile: reportPath, atomically: true, encoding: NSUTF8StringEncoding)
+    try report.write(toFile: reportPath, atomically: true, encoding: String.Encoding.utf8)
     
     try ifChangesCommitAndPush(repoPath: statsRoot)
 }

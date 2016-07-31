@@ -6,12 +6,15 @@
 //
 //
 
-import HTTPSClient
+import Vapor
+import VaporTLS
 import Jay
+import Jay_Extras
 import Redbird
 import Utils
 import POSIX
 import Foundation
+import String
 
 //FIXME: store the etags separately from the files, so that we don't
 //have to load the huge files from redis just to get the etag
@@ -20,26 +23,28 @@ public class PackageCrawler {
 
     public init() { }
 
-    private var _githubAPIClient: Client?
-    private func githubAPIClient() throws -> Client {
+    private var _githubAPIClient: TLSClient?
+    private func githubAPIClient() throws -> TLSClient {
         if let cl = _githubAPIClient {
             return cl
         }
-        let uri = URI(scheme: "https", host: "api.github.com", port: 443)
-        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
-        let client = try Client(uri: uri, configuration: config)
+//        let uri = URI(scheme: "https", host: "api.github.com", port: 443)
+//        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
+//        let client = try Client(uri: uri, configuration: config)
+        let client = try TLSClient(scheme: "https", host: "api.github.com", port: 443, securityLayer: .tls)
         _githubAPIClient = client
         return client
     }
 
-    private var _packageFileClient: Client?
-    private func packageFileClient() throws -> Client {
+    private var _packageFileClient: TLSClient?
+    private func packageFileClient() throws -> TLSClient {
         if let cl = _packageFileClient {
             return cl
         }
-        let uri = URI(scheme: "https", host: "raw.githubusercontent.com", port: 443)
-        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
-        let client = try Client(uri: uri, configuration: config)
+//        let uri = URI(scheme: "https", host: "raw.githubusercontent.com", port: 443)
+//        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
+//        let client = try Client(uri: uri, configuration: config)
+        let client = try TLSClient(scheme: "https", host: "raw.githubusercontent.com", port: 443, securityLayer: .tls)
         _packageFileClient = client
         return client
     }
@@ -48,23 +53,21 @@ public class PackageCrawler {
         
         let path = "/repos\(repoName)"
         let client = try githubAPIClient()
-        let response = try client.get(path, headers: headersWithGzip())
+        let response = try client.get(path: path, headers: headersWithGzip())
         
         switch response.status.statusCode {
         case 200:
             //parse response
             let bytes = try decodeResponseData(response: response).bytes
-            if
-                let dict = try Jay().jsonFromData(bytes) as? [String: Any],
-                let branch = dict["default_branch"] as? String
-            {
+            let dict = try Jay().jsonFromData(bytes)
+            if let branch = dict.dictionary?["default_branch"]?.string {
                 return branch
             }
         case 404:
             throw CrawlError.got404
         default: break
         }
-        throw Error(String(response.status))
+        throw GenericError(String(response.status))
     }
 
     private enum FetchPackageResult {
@@ -72,15 +75,15 @@ public class PackageCrawler {
         case Unchanched
     }
 
-    private func _fetchPackageFile(client: Client, name: String, etag: String, branch: String) throws -> FetchPackageResult {
+    private func _fetchPackageFile(client: TLSClient, name: String, etag: String, branch: String) throws -> FetchPackageResult {
         
         //https://raw.githubusercontent.com/czechboy0/Jay/master/Package.swift
         let path = "\(name)/\(branch)/Package.swift"
         
         //attach etag and handle 304 properly
-        var headers: Headers = headersWithGzip()
+        var headers = headersWithGzip()
         headers["If-None-Match"] = etag
-        let response = try client.get(path, headers: headers)
+        let response = try client.get(path: path, headers: headers)
         
         switch response.status.statusCode {
         case 304: //not changed
@@ -94,11 +97,11 @@ public class PackageCrawler {
         case 503:
             throw CrawlError.got503
         default:
-            throw Error(String(response.status))
+            throw GenericError(String(response.status))
         }
     }
 
-    private func fetchPackageFile(client: Client, name: String, etag: String) throws -> FetchPackageResult {
+    private func fetchPackageFile(client: TLSClient, name: String, etag: String) throws -> FetchPackageResult {
         
         // do {
             return try _fetchPackageFile(client: client, name: name, etag: etag, branch: "master")
@@ -109,8 +112,6 @@ public class PackageCrawler {
         // }
     }
 
-    
-    
     //pulls repo names from db and fetches the package.swift
     //for each. uses ETags to not re-fetch unchanged files.
     public func crawlRepoPackageFiles(db: Redbird) throws {
@@ -167,15 +168,15 @@ public class PackageCrawler {
                     try _fetch()
                 } catch CrawlError.got404 {
                     try _delete(error: "404")
-                } catch C7.StreamError.closedStream {
-                    _sleep(10)
-                    _retry(error: "timed out")
+//                } catch C7.StreamError.closedStream {
+//                    _sleep(10)
+//                    _retry(error: "timed out")
                 } catch SystemError.operationTimedOut {
                     _retry(error: "timed out")
                 } catch CrawlError.got503 {
                     _retry(error: "503")
-                } catch HTTPSClient.ClientError.brokenConnection {
-                    _retry(error: "brokenConnection")
+//                } catch HTTPSClient.ClientError.brokenConnection {
+//                    _retry(error: "brokenConnection")
                 } catch {
                     print("\(name) -> \(error)")
                 }
@@ -187,7 +188,7 @@ public class PackageCrawler {
             if !toAdd.isEmpty {
                 let p = db.pipeline()
                 try toAdd.forEach {
-                    try p.enqueue("SET", params: ["package::\($0.name)", "\($0.etag)::\($0.data)"])
+                    _ = try p.enqueue("SET", params: ["package::\($0.name)", "\($0.etag)::\($0.data)"])
                 }
                 try p.execute()
                 print("Fetched package files from:")

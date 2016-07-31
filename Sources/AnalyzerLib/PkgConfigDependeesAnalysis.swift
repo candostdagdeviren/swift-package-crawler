@@ -42,7 +42,7 @@ struct PkgConfigDependeesAnalysis: Analysis {
         let directDependees = _directDependees(directDependencies: directDependencies)
         let transitiveDependees = _transitiveDependees(directDependencies)
         
-        let results = sortedNames.map { (name: String) -> [String: Any] in
+        let results: [Any] = sortedNames.map { (name: String) -> [String: Any] in
             let dirDeps = Array(directDependees[name] ?? [])
             let tranDeps = Array(transitiveDependees[name] ?? [])
             return [
@@ -53,9 +53,9 @@ struct PkgConfigDependeesAnalysis: Analysis {
         }
         
         let path = try analysisResultPath(name: "PkgConfigDependees.json")
-        let jsonData = try Jay(formatting: .prettified).dataFromJson(results)
+        let jsonData = try Jay(formatting: .prettified).dataFromJson(anyArray: results)
         let jsonString = try jsonData.string()
-        try jsonString.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+        try jsonString.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
         print("Printed results to \(path)")
     }
 }

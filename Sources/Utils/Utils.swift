@@ -8,10 +8,13 @@
 
 import Foundation
 import Redbird
-import S4
 import gzip
 import Jay
 import Tasks
+import Vapor
+import VaporTLS
+import HTTP
+import C7
 
 #if os(Linux)
 public func autoreleasepool(block: @noescape () throws -> ()) rethrows {
@@ -19,44 +22,51 @@ public func autoreleasepool(block: @noescape () throws -> ()) rethrows {
 }
 #endif
 
-public func headersWithGzip() -> Headers {
-    return ["Accept-Encoding": "gzip"]
-}
+public typealias TLSClient = HTTP.Client<TLSClientStream>
 
-public func decodeResponseData(response: Response) throws -> Data {
-    var resp = response
-    let buffer = try resp.body.becomeBuffer()
-    guard response.headers["Content-Encoding"] == "gzip" || response.headers["Transfer-Encoding"] == "gzip" else {
-        return buffer
-    }
-    return try buffer.gzipUncompressed()
-}
-
-
-public enum CrawlError: ErrorProtocol {
+public enum CrawlError: Error {
     case got404 //that's the end, finish this crawling session
     case got429 //too many requests, back off
     case got503 //service unavailable, retry
 }
 
-public struct Error: ErrorProtocol {
+public struct GenericError: Error {
     let description: String
     public init(_ description: String) {
         self.description = description
     }
 }
 
+public func headersWithGzip() -> [HeaderKey: String] {
+    return ["Accept-Encoding": "gzip"]
+}
+
+public func decodeResponseData(response: Response) throws -> C7.Data {
+    guard let bytes = response.body.bytes else { throw GenericError("No response bytes") }
+    let data = C7.Data(bytes)
+    guard response.headers["Content-Encoding"] == "gzip" || response.headers["Transfer-Encoding"] == "gzip" else {
+        return data
+    }
+    return try data.gzipUncompressed()
+}
+
+
 extension String {
+    
+    private func fileManager() -> FileManager {
+        return FileManager.default
+    }
+    
     func mkdir() throws {
-        try NSFileManager().createDirectory(atPath: self, withIntermediateDirectories: true, attributes: nil)
+        try fileManager().createDirectory(atPath: self, withIntermediateDirectories: true, attributes: nil)
     }
     
     public func rm() throws {
-        try NSFileManager().removeItem(atPath: self)
+        try fileManager().removeItem(atPath: self)
     }
     
     public func ls() throws -> [String] {
-        return try NSFileManager().contentsOfDirectory(atPath: self)
+        return try fileManager().contentsOfDirectory(atPath: self)
     }
     
     public func isRemoteGitURL() -> Bool {
@@ -150,7 +160,7 @@ extension String {
     }
     
     public func leftPad(_ padding: Int) -> String {
-        let length = self.lengthOfBytes(using: NSUTF8StringEncoding)
+        let length = self.lengthOfBytes(using: String.Encoding.utf8)
         if length >= padding {
             return self
         } else {
@@ -166,7 +176,8 @@ extension Int {
     }
     
     public func percentOf(_ total: Int) -> Double {
-        let percent = Double(Int(10000 * Double(self)/Double(total)))/100
+        let pc = Double(self)/Double(total)
+        let percent = Double(Int(10000 * pc))/100
         return percent
     }
 }
@@ -195,11 +206,11 @@ extension Collection where Iterator.Element == UInt8 {
     
     public func write(to path: String) throws {
         let string = try self.string()
-        try string.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+        try string.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
     }
 }
 
-struct TaskError: ErrorProtocol, CustomStringConvertible {
+struct TaskError: Error, CustomStringConvertible {
     
     let taskResult: TaskResult
     let comment: String
@@ -230,9 +241,9 @@ public func ifChangesCommitAndPush(repoPath: String) throws {
         throw TaskError("Failed to git add all changes", addResult)
     }
     
-    let dateFormatter = NSDateFormatter()
+    let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "'on' yyyy-MM-dd 'at' HH:mm"
-    let commitMessage = "Updated data \(dateFormatter.string(from: NSDate()))"
+    let commitMessage = "Updated data \(dateFormatter.string(from: Date()))"
     
     let commitResult = try Task.run(["git", "commit", "-am", "\(commitMessage)"], pwd: repoPath)
     guard commitResult.code == 0 else {

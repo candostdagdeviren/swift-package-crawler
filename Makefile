@@ -5,7 +5,7 @@ redis:
 build:
 	swift build
 
-recrawl: build
+recrawl:
 	.build/debug/PackageSearcher
 	.build/debug/PackageCrawler
 	.build/debug/PackageExporter
@@ -15,6 +15,6 @@ update:
 	.build/debug/DataUpdater
 	.build/debug/StatisticsUpdater
 
-full: build recrawl update
+full: recrawl update
 	@echo "Finished"
 

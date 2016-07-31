@@ -12,7 +12,7 @@ import Utils
 import Foundation
 import Redbird
 
-enum ExportError: ErrorProtocol {
+enum ExportError: Error {
     case PackageSwiftFailedToParse(packagePath: String, stderr: String)
 }
 
@@ -34,10 +34,12 @@ func convertPackageToJSON(name: String) throws {
     }
     let jsonString = result.stdout
     let data = jsonString.toBytes()
-    guard let _ = try Jay().jsonFromData(data) as? [String: Any] else {
-        throw Error("Failed to parse JSON for package \(packagePath)")
+    do {
+        let _ = try Jay().jsonFromData(data)
+        try jsonString.write(toFile: jsonPath, atomically: true, encoding: String.Encoding.utf8)
+    } catch {
+        throw GenericError("Failed to parse JSON for package \(packagePath)")
     }
-    try jsonString.write(toFile: jsonPath, atomically: true, encoding: NSUTF8StringEncoding)
 }
 
 func exportPackage(db: Redbird, name: String) throws {
@@ -45,17 +47,17 @@ func exportPackage(db: Redbird, name: String) throws {
     //fetch contents from redis
     let packageName = "package::\(name)"
     guard let str = try db.command("GET", params: [packageName]).toMaybeString() else {
-        throw Error("No Package.swift found for \(name)")
+        throw GenericError("No Package.swift found for \(name)")
     }
     guard let package = str.components(separatedBy: "::").last else {
-        throw Error("Unable to parse package contents for \(name)")
+        throw GenericError("Unable to parse package contents for \(name)")
     }
     
     //create path
     let path = try packageSwiftPath(name: name)
     
     //save to path
-    try package.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+    try package.write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
     print("Saved \(name)")
 }
 
@@ -68,12 +70,12 @@ func scanPackages(db: Redbird, block: (keys: [String]) throws -> ()) throws {
         try autoreleasepool { _ in
             
             let arr = try db.command("SCAN", params: ["\(cursor)"]).toArray()
-            guard arr.count == 2 else { throw Error("Invalid Redis response \(arr)") }
+            guard arr.count == 2 else { throw GenericError("Invalid Redis response \(arr)") }
             guard
                 let newCursorString = try arr[0].toMaybeString(),
                 let newCursor = Int(newCursorString),
                 let keysObjs = try arr[1].toMaybeArray()
-                else { throw Error("Invalid Redis response \(arr)") }
+                else { throw GenericError("Invalid Redis response \(arr)") }
             let keys = keysObjs.flatMap { try? $0.toString() }.filter { $0.hasPrefix("package::") }
             let names = keys.flatMap { $0.components(separatedBy: "::").last }
             

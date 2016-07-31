@@ -35,7 +35,7 @@ struct NoNamePackagesAnalysis: Analysis {
                                  ]
         
         let path = try analysisResultPath(name: "NamelessPackages.json")
-        let jsonData = try Jay(formatting: .prettified).dataFromJson(out)
+        let jsonData = try Jay(formatting: .prettified).dataFromJson(anyDictionary: out)
         try jsonData.write(to: path)
         print("Printed results to \(path)")
         print("Nameless count: \(list.count), percentage: \(percentage)%")

@@ -7,6 +7,7 @@
 //
 
 import Jay
+import Jay_Extras
 import Utils
 import Redbird
 import Foundation
@@ -15,11 +16,11 @@ struct Version {
     let lowerBound: String
     let upperBound: String
     
-    init(json: [String: Any]) throws {
+    init(json: [String: JSON]) throws {
         guard
-            let lower = json["lowerBound"] as? String,
-            let upper = json["upperBound"] as? String
-        else { throw Error("Invalid version dict") }
+            let lower = json["lowerBound"]?.string,
+            let upper = json["upperBound"]?.string
+        else { throw GenericError("Invalid version dict") }
         self.lowerBound = lower
         self.upperBound = upper
     }
@@ -29,11 +30,11 @@ struct Dependency {
     let url: String
     let version: Version
     
-    init(json: [String: Any]) throws {
+    init(json: [String: JSON]) throws {
         guard
-            let url = json["url"] as? String,
-            let versionDict = json["version"] as? [String: Any]
-            else { throw Error("Invalid dependency") }
+            let url = json["url"]?.string,
+            let versionDict = json["version"]?.dictionary
+            else { throw GenericError("Invalid dependency") }
         self.url = url
         self.version = try Version(json: versionDict)
     }
@@ -55,38 +56,42 @@ struct Package {
     let pkgConfig: String?
     let providers: [[String: String]]?
     
-    let originalJSON: [String: Any]
+    let originalJSON: [String: JSON]
     
     //extras
     let remoteName: String
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
-    init(json: [String: Any], remoteName: (String, String)) throws {
+    init(json: [String: JSON], remoteName: (String, String)) throws {
         self.originalJSON = json
-        if let name = json["name"] as? String {
+        if let name = json["name"]?.string {
             self.name = name
         } else {
             self.name = remoteName.1
         }
         self.remoteName = "/\(remoteName.0)/\(remoteName.1)"
-        guard let dependenciesArray = json["dependencies"] as? [Any] else {
-            throw Error("Missing dependencies array")
+        guard let dependenciesArray = json["dependencies"]?.array else {
+            throw GenericError("Missing dependencies array")
         }
-        guard let testDependenciesArray = json["testDependencies"] as? [Any] else {
-            throw Error("Missing test dependencies array")
+        guard let testDependenciesArray = json["testDependencies"]?.array else {
+            throw GenericError("Missing test dependencies array")
         }
-        self.dependencies = try dependenciesArray.flatMap { $0 as? [String: Any] }.map { try Dependency(json: $0) }
-        self.testDependencies = try testDependenciesArray.flatMap { $0 as? [String: Any] }.map { try Dependency(json: $0) }
+        self.dependencies = try dependenciesArray
+            .flatMap { $0.dictionary }
+            .map { try Dependency(json: $0) }
+        self.testDependencies = try testDependenciesArray
+            .flatMap { $0.dictionary }
+            .map { try Dependency(json: $0) }
 
-        self.pkgConfig = json["pkgConfig"] as? String
+        self.pkgConfig = json["pkgConfig"]?.string
         
-        if let anyProviders = json["package.providers"] as? [Any] {
+        if let anyProviders = json["package.providers"]?.array {
             var provs: [[String: String]] = []
             anyProviders.forEach({ (item) in
-                if let dict = item as? [String: Any] {
+                if let dict = item.dictionary {
                     var provider: [String: String] = [:]
                     dict.forEach({ (key, value) in
-                        if let stringValue = value as? String {
+                        if let stringValue = value.string {
                             provider[key] = stringValue
                         }
                     })
@@ -117,8 +122,8 @@ func parseJSONPackage(path: String) throws -> Package {
     let jsonString = try String(contentsOfFile: path)
     let remoteNameHint = remoteNameHintFromPath(path: path)
     let data = jsonString.toBytes()
-    guard let json = try Jay().jsonFromData(data) as? [String: Any] else {
-        throw Error("Failed to parse JSON for package \(path)")
+    guard let json = try Jay().jsonFromData(data).dictionary else {
+        throw GenericError("Expected a top-level dictionary")
     }
     let package = try Package(json: json, remoteName: remoteNameHint)
     return package

@@ -8,6 +8,7 @@
 
 import Redbird
 import Utils
+import String
 
 struct DependencyTrees: Analysis {
     
@@ -52,7 +53,7 @@ struct DependencyTrees: Analysis {
             histogram[depCount] = (histogram[depCount] ?? 0) + 1
         }
         
-        let total = histogram.values.reduce(0, combine: +)
+        let total = histogram.values.reduce(0, +)
         let keys = histogram.keys.sorted()
         return makeMarkdownTable(title: "Dependency histogram", headers: ["# Dependencies", "# Packages", "% of Total"], rowCount: histogram.count) {
             let key = keys[$0]
@@ -68,7 +69,7 @@ struct DependencyTrees: Analysis {
         let topCharts = transitiveDependees
             .map { (key, value) -> (String, Int) in
                 return (key, value.count)
-            }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
+            }.sorted(by: { $0.0.1 > $0.1.1 })
         
         let count = 10
         return makeMarkdownTable(title: "Top \(count) most popular transitive dependencies", headers: ["Rank", "# Dependees", "Name"], rowCount: count) {
@@ -111,7 +112,7 @@ struct DependencyTrees: Analysis {
         let topCharts = allAuthorDependees
             .map { (key, value) -> (String, Int) in
                 return (key, value.count)
-            }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
+            }.sorted(by: { $0.0.1 > $0.1.1 })
         return topCharts
     }
     
@@ -121,7 +122,7 @@ struct DependencyTrees: Analysis {
         let topCharts = dependees
             .map { (key, value) -> (String, Int) in
                 return (key, value.count)
-            }.sorted(isOrderedBefore: { $0.0.1 > $0.1.1 })
+            }.sorted(by: { $0.0.1 > $0.1.1 })
         
         let count = 10
         return makeMarkdownTable(title: "Top \(count) most popular direct dependencies", headers: ["Rank", "# Dependees", "Name"], rowCount: count) {

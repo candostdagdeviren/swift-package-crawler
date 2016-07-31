@@ -47,7 +47,7 @@ func _transitiveDependees(_ directDeps: [String: [String]]) -> [String: Set<Stri
         let direct = directDependees[name] ?? []
         let transDepsOfDeps = direct
             .map { _calculateTransitiveDependees(name: $0) }
-            .reduce(Set<String>(), combine: { $0.union($1) })
+            .reduce(Set<String>(), { $0.union($1) })
         let allDependees = direct.union(transDepsOfDeps)
         transitiveDependees[name] = allDependees
         
@@ -58,7 +58,7 @@ func _transitiveDependees(_ directDeps: [String: [String]]) -> [String: Set<Stri
     }
     
     //run
-    directDependees.keys.forEach { _calculateTransitiveDependees(name: $0) }
+    directDependees.keys.forEach { _ = _calculateTransitiveDependees(name: $0) }
     return transitiveDependees
 }
 
