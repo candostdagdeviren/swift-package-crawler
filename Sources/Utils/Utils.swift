@@ -54,7 +54,11 @@ public func decodeResponseData(response: Response) throws -> C7.Data {
 extension String {
     
     private func fileManager() -> FileManager {
+        #if os(Linux)
+        return FileManager.default()
+        #else
         return FileManager.default
+        #endif
     }
     
     func mkdir() throws {
