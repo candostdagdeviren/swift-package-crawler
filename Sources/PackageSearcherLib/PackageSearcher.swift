@@ -28,7 +28,7 @@ public struct PackageSearcher {
     private func fetchPage(client: TLSClient, query: String, page: Int) throws -> [String] {
         
         let path = makePath(query: query, page: page)
-        print("[\(Date())] Fetching page \(page)", terminator: " ... ")
+        print("[] Fetching page \(page)", terminator: " ... ")
         var headers: [HeaderKey: String] = headersWithGzip()
         headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/602.1.29 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17"
         headers["Referer"] = "https://github.com/search?l=swift&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&type=Code&utf8=%E2%9C%93"

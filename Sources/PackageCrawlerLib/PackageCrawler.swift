@@ -182,7 +182,7 @@ public class PackageCrawler {
                 }
             })
             
-            print("[\(NSDate())] Verified \(names.count - toAdd.count) cached files")
+            print("[] Verified \(names.count - toAdd.count) cached files")
 
             //add all the new data to db
             if !toAdd.isEmpty {
