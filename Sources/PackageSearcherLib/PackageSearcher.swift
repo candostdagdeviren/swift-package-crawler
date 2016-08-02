@@ -28,7 +28,7 @@ public struct PackageSearcher {
     private func fetchPage(client: TLSClient, query: String, page: Int) throws -> [String] {
         
         let path = makePath(query: query, page: page)
-        print("[] Fetching page \(page)", terminator: " ... ")
+        print("[\(Date())] Fetching page \(page)", terminator: " ... ")
         var headers: [HeaderKey: String] = headersWithGzip()
         headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/602.1.29 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17"
         headers["Referer"] = "https://github.com/search?l=swift&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&type=Code&utf8=%E2%9C%93"
@@ -121,7 +121,7 @@ public struct PackageSearcher {
 //        let uri = URI(scheme: "https", host: "github.com", port: 443)
 //        let config = ClientConfiguration(connectionTimeout: 30.seconds, keepAlive: true)
 //        let client = try Client(uri: uri, configuration: config)
-        let client = try TLSClient(scheme: "https", host: "github.com", port: 443, securityLayer: .tls)
+//        let client = try TLSClient(scheme: "https", host: "github.com", port: 443, securityLayer: .tls)
         let query = "Package.swift+language%3ASwift+in%3Apath+path%3A%2F"
         
         var page = 1
@@ -146,6 +146,8 @@ public struct PackageSearcher {
             
             do {
                 func _fetch() throws {
+                    //TODO: don't create a new client for each fetch, unfortunately reusing the same one was failing after timeouts.
+                    let client = try TLSClient(scheme: "https", host: "github.com", port: 443, securityLayer: .tls)
                     let fetched = try fetchPage(client: client, query: query, page: page)
                     if !fetched.isEmpty {
                         let counts = try insertIntoDb(db: db, newlyFetched: fetched)
