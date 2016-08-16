@@ -34,6 +34,9 @@ struct Dependency {
             let url = json["url"] as? String,
             let versionDict = json["version"] as? [String: Any]
             else { throw Error("Invalid dependency") }
+        guard url.starts(with: "https://github.com") else {
+            throw Error("Invalid dependency url: \(url)")
+        }
         self.url = url
         self.version = try Version(json: versionDict)
     }
@@ -68,7 +71,8 @@ struct Package {
         } else {
             self.name = remoteName.1
         }
-        self.remoteName = "/\(remoteName.0)/\(remoteName.1)"
+        let author = resolveAuthorAlias(remoteName.0)
+        self.remoteName = "/\(author)/\(remoteName.1)"
         guard let dependenciesArray = json["dependencies"] as? [Any] else {
             throw Error("Missing dependencies array")
         }
@@ -113,7 +117,6 @@ func remoteNameHintFromPath(path: String) -> (String, String) {
 }
 
 func parseJSONPackage(path: String) throws -> Package {
-    
     let jsonString = try String(contentsOfFile: path)
     let remoteNameHint = remoteNameHintFromPath(path: path)
     let data = jsonString.toBytes()

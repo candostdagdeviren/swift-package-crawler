@@ -27,8 +27,13 @@ struct PackageIterator {
     
     mutating func next() throws -> Package? {
         guard let fileName = iterator.next() else { return nil }
-        let package = try parseJSONPackage(path: fileName)
-        return package
+        do {
+            let package = try parseJSONPackage(path: fileName)
+            return package
+        } catch {
+//            print(error)
+            return try next()
+        }
     }
     
     func makeNew() -> PackageIterator {

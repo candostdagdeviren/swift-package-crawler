@@ -11,6 +11,7 @@ private func _prettyDependencyNames(package: Package) -> [String] {
         .allDependencies
         .filter { $0.url.lowercased().isRemoteGitURL() }
         .map { $0.url.githubName() }
+        .map { $0.authorAliasResolved() }
     return deps
 }
 
