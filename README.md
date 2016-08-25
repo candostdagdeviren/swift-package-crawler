@@ -1,7 +1,7 @@
 # swift-package-crawler
 (Experimental) Crawls GitHub for Swift repos with Package.swift files
 
-Used to generate [swiftpm-packages-statistics](https://github.com/czechboy0/swiftpm-packages-statistics) and [swift-package-crawler-data](https://github.com/czechboy0/swift-package-crawler-data).
+Generates [swiftpm-packages-statistics](https://github.com/czechboy0/swiftpm-packages-statistics) and [swift-package-crawler-data](https://github.com/czechboy0/swift-package-crawler-data).
 
 # Running
 
