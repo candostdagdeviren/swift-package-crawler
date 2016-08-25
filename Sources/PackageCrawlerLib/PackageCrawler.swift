@@ -67,15 +67,17 @@ public class PackageCrawler {
         throw Error(String(response.status))
     }
 
-    private enum FetchPackageResult {
+    private enum FetchFileResult {
         case FileContents(contents: String, etag: String)
         case Unchanched
     }
-
-    private func _fetchPackageFile(client: Client, name: String, etag: String, branch: String) throws -> FetchPackageResult {
+    
+    private func _fetchFile(client: Client, file: String, name: String, etag: String, branch: String) throws -> FetchFileResult {
         
         //https://raw.githubusercontent.com/czechboy0/Jay/master/Package.swift
-        let path = "\(name)/\(branch)/Package.swift"
+        //https://raw.githubusercontent.com/czechboy0/Jay/master/.swift-version
+        
+        let path = "\(name)/\(branch)/\(file)"
         
         //attach etag and handle 304 properly
         var headers: Headers = headersWithGzip()
@@ -88,7 +90,7 @@ public class PackageCrawler {
         case 200:
             let contents = String(try decodeResponseData(response: response))
             let etag = response.headers["ETag"] ?? ""
-            return FetchPackageResult.FileContents(contents: contents, etag: etag)
+            return FetchFileResult.FileContents(contents: contents, etag: etag)
         case 404:
             throw CrawlError.got404
         case 503:
@@ -98,10 +100,21 @@ public class PackageCrawler {
         }
     }
 
-    private func fetchPackageFile(client: Client, name: String, etag: String) throws -> FetchPackageResult {
+    private func fetchSwiftVersionFile(client: Client, name: String, etag: String) throws -> FetchFileResult {
         
         // do {
-            return try _fetchPackageFile(client: client, name: name, etag: etag, branch: "master")
+        return try _fetchFile(client: client, file: ".swift-version", name: name, etag: etag, branch: "master")
+        // } catch CrawlError.got404 {
+        //     //maybe default branch has a different name
+        //     let defaultBranch = try getDefaultBranch(repoName: name)
+        //     return try _fetchPackageFile(client: client, name: name, etag: etag, branch: defaultBranch)
+        // }
+    }
+    
+    private func fetchPackageFile(client: Client, name: String, etag: String) throws -> FetchFileResult {
+        
+        // do {
+        return try _fetchFile(client: client, file: "Package.swift", name: name, etag: etag, branch: "master")
         // } catch CrawlError.got404 {
         //     //maybe default branch has a different name
         //     let defaultBranch = try getDefaultBranch(repoName: name)
@@ -109,8 +122,6 @@ public class PackageCrawler {
         // }
     }
 
-    
-    
     //pulls repo names from db and fetches the package.swift
     //for each. uses ETags to not re-fetch unchanged files.
     public func crawlRepoPackageFiles(db: Redbird) throws {
@@ -119,25 +130,49 @@ public class PackageCrawler {
                 
         try scanNames(db: db) { (names) in
             
-            var toAdd: [(name: String, etag: String, data: String)] = []
+            var packageFilesToAdd: [(name: String, etag: String, data: String)] = []
+            var swiftVersionFilesToAdd: [(name: String, etag: String, data: String)] = []
+            
             try names.forEach({ (name) in
                 
-                var etag: String? = nil
+                var packageFileETag: String? = nil
+                var swiftVersionFileETag: String? = nil
+
                 if let existing = try db.command("GET", params: ["package::\(name)"]).toMaybeString() {
                     let comps = existing.split(byString: "::")
                     if comps.count == 2 {
                         //we already have a cached version, attach the etag
-                        etag = comps[0]
+                        packageFileETag = comps[0]
+                    }
+                }
+                
+                if let existing = try db.command("GET", params: ["swift-version::\(name)"]).toMaybeString() {
+                    let comps = existing.split(byString: "::")
+                    if comps.count == 2 {
+                        //we already have a cached version, attach the etag
+                        swiftVersionFileETag = comps[0]
                     }
                 }
                 
                 func _fetch() throws {
-                    let result = try self.fetchPackageFile(client: client, name: name, etag: etag ?? "")
-                    switch result {
+                    
+                    //fetch Package.swift
+                    let packageFileResult = try self.fetchPackageFile(client: client, name: name, etag: packageFileETag ?? "")
+                    switch packageFileResult {
                     case .FileContents(let contents, let etag):
-                        toAdd.append((name, etag, contents))
+                        packageFilesToAdd.append((name, etag, contents))
                     case .Unchanched: break //nothing to do
                     }
+                    
+                    //also try .swift-version, if present
+                    do {
+                        let swiftVersionResult = try self.fetchSwiftVersionFile(client: client, name: name, etag: swiftVersionFileETag ?? "")
+                        switch swiftVersionResult {
+                        case .FileContents(let contents, let etag):
+                            swiftVersionFilesToAdd.append((name, etag, contents))
+                        case .Unchanched: break //nothing to do
+                        }
+                    } catch { }
                 }
                 
                 func _retry(error: String) {
@@ -181,17 +216,27 @@ public class PackageCrawler {
                 }
             })
             
-            print("[\(NSDate())] Verified \(names.count - toAdd.count) cached files")
+            print("[\(NSDate())] Verified \(names.count - packageFilesToAdd.count) cached files")
 
             //add all the new data to db
-            if !toAdd.isEmpty {
+            if !packageFilesToAdd.isEmpty {
                 let p = db.pipeline()
-                try toAdd.forEach {
+                try packageFilesToAdd.forEach {
                     try p.enqueue("SET", params: ["package::\($0.name)", "\($0.etag)::\($0.data)"])
                 }
                 try p.execute()
                 print("Fetched package files from:")
-                toAdd.forEach { print(" -> \($0.name)") }
+                packageFilesToAdd.forEach { print(" -> \($0.name)") }
+            }
+            
+            if !swiftVersionFilesToAdd.isEmpty {
+                let p = db.pipeline()
+                try swiftVersionFilesToAdd.forEach {
+                    try p.enqueue("SET", params: ["swift-version::\($0.name)", "\($0.etag)::\($0.data)"])
+                }
+                try p.execute()
+                print("Fetched swift-version files from:")
+                swiftVersionFilesToAdd.forEach { print(" -> \($0.name)") }
             }
         }
     }

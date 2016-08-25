@@ -17,6 +17,7 @@ func updateStats(db: Redbird) throws {
     monthFormatter.dateFormat = "MMMM yyyy"
     let growthMonth = monthFormatter.string(from: NSDate())
     
+    let swift_versions_stat = try readStat(db: db, name: "swift_versions_stat")
     let number_of_dependencies_histogram_stat = try readStat(db: db, name: "number_of_dependencies_histogram_stat")
     let most_popular_direct_dependencies_stat = try readStat(db: db, name: "most_popular_direct_dependencies_stat")
     let most_popular_transitive_dependencies_stat = try readStat(db: db, name: "most_popular_transitive_dependencies_stat")
@@ -26,6 +27,7 @@ func updateStats(db: Redbird) throws {
     let packageCount = try readStat(db: db, name: "package_count")
 
     let context = [
+                      "swift_versions_stat": swift_versions_stat,
                       "last_updated_date": date,
                       "analyzed_package_count": packageCount,
                       "growth_rate": "30",

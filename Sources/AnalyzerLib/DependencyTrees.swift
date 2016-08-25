@@ -129,28 +129,27 @@ struct DependencyTrees: Analysis {
             return [($0+1).leftPad(3)+".", item.1.leftPad(3), item.0.markdownGithubRepoLink()]
         }
     }
+}
+
+//MARK: Utils
+
+internal func makeMarkdownTable(title: String, headers: [String], rowCount: Int, row: (i: Int) -> [String]) -> String {
     
-    //MARK: Utils
-        
-    private func makeMarkdownTable(title: String, headers: [String], rowCount: Int, row: (i: Int) -> [String]) -> String {
-        
-        var output: String = ""
-        
-        let columnCount = headers.count
-        let head = ([""] + headers.map { " \($0) " } + [""]).joined(separator: "|")
-        output.appendLine(head)
-        let headLine = ([""] + headers.map { _ in " --- " } + [""]).joined(separator: "|")
-        output.appendLine(headLine)
-        for i in 0...rowCount-1 {
-            let rowData = row(i: i)
-            assert(columnCount == rowData.count, "Number of headers and row columns must match")
-            let line = ([""] + rowData.map { " \($0) " } + [""]).joined(separator: "|")
-            output.appendLine(line)
-        }
-        
-        return output
+    var output: String = ""
+    
+    let columnCount = headers.count
+    let head = ([""] + headers.map { " \($0) " } + [""]).joined(separator: "|")
+    output.appendLine(head)
+    let headLine = ([""] + headers.map { _ in " --- " } + [""]).joined(separator: "|")
+    output.appendLine(headLine)
+    for i in 0...rowCount-1 {
+        let rowData = row(i: i)
+        assert(columnCount == rowData.count, "Number of headers and row columns must match")
+        let line = ([""] + rowData.map { " \($0) " } + [""]).joined(separator: "|")
+        output.appendLine(line)
     }
     
+    return output
 }
 
 extension String {

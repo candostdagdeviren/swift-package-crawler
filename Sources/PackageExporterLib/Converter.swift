@@ -51,11 +51,23 @@ func exportPackage(db: Redbird, name: String) throws {
         throw Error("Unable to parse package contents for \(name)")
     }
     
+    //also try to fetch swift-version from redis
+    let swiftVersionName = "swift-version::\(name)"
+    if let str = try db.command("GET", params: [swiftVersionName]).toMaybeString() {
+        guard let swiftVersion = str.components(separatedBy: "::").last else {
+            throw Error("Unable to parse swift-version contents for \(name)")
+        }
+        
+        //write back to file
+        let path = try swiftVersionPath(name: name)
+        try swiftVersion.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+    }
+
     //create path
-    let path = try packageSwiftPath(name: name)
+    let packagePath = try packageSwiftPath(name: name)
     
     //save to path
-    try package.write(toFile: path, atomically: true, encoding: NSUTF8StringEncoding)
+    try package.write(toFile: packagePath, atomically: true, encoding: NSUTF8StringEncoding)
     print("Saved \(name)")
 }
 
@@ -96,6 +108,7 @@ public func exportAllPackages() throws {
     //a lastModified or something received from a stat call on the file)
     try packagesSwiftPath().rm()
     try packagesJSONPath().rm()
+    try swiftVersionPath().rm()
     
     let db = try Redbird()
 

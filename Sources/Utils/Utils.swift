@@ -68,6 +68,12 @@ func fixedName(_ name: String) -> String {
     return name.components(separatedBy: "/").filter { !$0.isEmpty }.joined(separator: "_")
 }
 
+public func swiftVersionPath(name: String) throws -> String {
+    let name = "\(fixedName(name))-swift_version"
+    let parent = try swiftVersionPath()
+    return parent.addPathComponents(name)
+}
+
 public func packageSwiftPath(name: String) throws -> String {
     let name = "\(fixedName(name))-Package.swift"
     let parent = try packagesSwiftPath()
@@ -87,6 +93,12 @@ public func analysisResultPath(name: String) throws -> String {
 
 public func cacheRootPath() throws -> String {
     let path = (#file.pathComponents().dropLast(3) + ["Cache"]).joined(separator: "/")
+    try path.mkdir()
+    return path
+}
+
+public func swiftVersionPath() throws -> String {
+    let path = try cacheRootPath().addPathComponents("PackageSwiftVersions")
     try path.mkdir()
     return path
 }

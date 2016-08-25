@@ -51,12 +51,13 @@ public func analyzeAllPackages() throws {
     
     let analyses: [Analysis] =
         [
+            SwiftVersions(db: db),
             NoNamePackagesAnalysis(),
             AllUniqueDependencies(db: db),
             DependencyTrees(db: db),
             PkgConfigAnalysis(),
             PkgConfigDependeesAnalysis()
-            ]
+        ]
     
     let iterator = PackageIterator(files: files)
     try analyses.forEach { (analysis) in

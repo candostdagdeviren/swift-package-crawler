@@ -7,6 +7,11 @@ Automatically crawled from GitHub using my [swift-package-crawler](https://githu
 
 **The rate of growth is about {{ growth_rate }} new packages per day (as of {{ growth_month }}).**
 
+## Swift versions
+**Question**: "Which Swift versions are projects using?"
+
+{{ swift_versions_stat }}
+
 ## Number of dependencies
 **Question**: "How many dependencies do most packages have?"  
 **Answer**: "Almost 60% have none, about 20% have one and then it levels off. And yes, one package has 59 dependencies."  

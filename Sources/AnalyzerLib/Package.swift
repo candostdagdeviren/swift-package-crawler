@@ -58,14 +58,18 @@ struct Package {
     let pkgConfig: String?
     let providers: [[String: String]]?
     
+    let swiftVersion: String?
+    
     let originalJSON: [String: Any]
     
     //extras
     let remoteName: String
     var allDependencies: [Dependency] { return dependencies + testDependencies }
     
-    init(json: [String: Any], remoteName: (String, String)) throws {
+    init(json: [String: Any], remoteName: (String, String), swiftVersion: String?) throws {
         self.originalJSON = json
+        self.swiftVersion = swiftVersion
+        
         if let name = json["name"] as? String {
             self.name = name
         } else {
@@ -116,6 +120,33 @@ func remoteNameHintFromPath(path: String) -> (String, String) {
     return (name, repo)
 }
 
+func parseSwiftVersion(name: String) throws -> String? {
+    let path = try swiftVersionPath(name: name)
+    do {
+        var contents = try String(contentsOfFile: path).trim()
+        
+        //replace swift-DEVELOPMENT-SNAPSHOT with just DEVELOPMENT-SNAPSHOT
+        if contents.hasPrefix("swift-") {
+            contents = contents.substring(from: contents.index(contents.startIndex, offsetBy: 6))
+        }
+        
+        //delete trailing .xctoolchain
+        if contents.hasSuffix(".xctoolchain") {
+            contents = contents.substring(to: contents.index(contents.endIndex, offsetBy: -12))
+        }
+        
+        //replace prepend "3.0-" before DEVELOPMENT-SNAPSHOT
+        if contents.hasPrefix("DEVELOPMENT-SNAPSHOT") {
+            contents = "3.0-" + contents
+        }
+        
+        return contents
+        
+    } catch {
+        return nil
+    }
+}
+
 func parseJSONPackage(path: String) throws -> Package {
     let jsonString = try String(contentsOfFile: path)
     let remoteNameHint = remoteNameHintFromPath(path: path)
@@ -123,7 +154,8 @@ func parseJSONPackage(path: String) throws -> Package {
     guard let json = try Jay().jsonFromData(data) as? [String: Any] else {
         throw Error("Failed to parse JSON for package \(path)")
     }
-    let package = try Package(json: json, remoteName: remoteNameHint)
+    let swiftVersion = try parseSwiftVersion(name: "\(remoteNameHint.0)/\(remoteNameHint.1)")
+    let package = try Package(json: json, remoteName: remoteNameHint, swiftVersion: swiftVersion)
     return package
 }
 
