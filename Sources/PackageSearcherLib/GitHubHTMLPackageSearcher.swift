@@ -12,12 +12,33 @@ import Redbird
 import Utils
 import Foundation
 
-public struct PackageSearcher {
+public protocol Searcher { }
+
+extension Searcher {
+    
+    public func insertIntoDb(db: Redbird, newlyFetched: [String]) throws -> (added: Int, total: Int) {
+        let setName = "github_names"
+        let params = [setName] + newlyFetched
+        let resp = try db
+            .pipeline()
+            .enqueue("SADD", params: params)
+            .enqueue("SCARD", params: [setName])
+            .execute()
+        let added = try resp[0].toInt()
+        let total = try resp[1].toInt()
+        return (added, total)
+    }
+}
+
+public struct GitHubHTMLPackageSearcher: Searcher {
     
     public init() { }
     
     private func makePath(query: String, page: Int) -> String {
-        let path = "/search?l=swift&o=desc&p=\(page)&q=\(query)&ref=searchresults&s=indexed&type=Code&utf8=true"
+        
+        //https://github.com/search?l=swift&o=desc&p=1&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&s=indexed&type=Code&utf8=true
+        
+        let path = "/search?l=swift&o=desc&p=\(page)&q=\(query)&ref=searchresults&s=indexed&type=Code&utf8=%E2%9C%93"
         return path
     }
 
@@ -26,9 +47,10 @@ public struct PackageSearcher {
         let path = makePath(query: query, page: page)
         print("[\(NSDate())] Fetching page \(page)", terminator: " ... ")
         var headers: Headers = headersWithGzip()
-        headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/602.1.29 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17"
-        headers["Referer"] = "https://github.com/search?l=swift&q=Package.swift+language%3ASwift+in%3Apath+path%3A%2F&ref=searchresults&type=Code&utf8=%E2%9C%93"
+        
+        headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/603.1.3 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.7"
         headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        headers["DNT"] = "1"
         
         func _fetch() throws -> Response {
             do {
@@ -67,19 +89,6 @@ public struct PackageSearcher {
         return repos
     }
 
-    public func insertIntoDb(db: Redbird, newlyFetched: [String]) throws -> (added: Int, total: Int) {
-        
-        let setName = "github_names"
-        let params = [setName] + newlyFetched
-        let resp = try db
-            .pipeline()
-            .enqueue("SADD", params: params)
-            .enqueue("SCARD", params: [setName])
-            .execute()
-        let added = try resp[0].toInt()
-        let total = try resp[1].toInt()
-        return (added, total)
-    }
     
     public func oneTimeInjectListOfNames(db: Redbird, names: [String]) throws {
         

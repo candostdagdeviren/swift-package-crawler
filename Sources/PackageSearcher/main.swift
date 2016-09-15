@@ -18,9 +18,13 @@ do {
     //you need to have a redis-server running at 127.0.0.1 port 6379
     let db = try Redbird()
     
+    //fetch from google
+    let googleSearcher = GoogleSearcher()
+    try googleSearcher.run(db: db)
+    
     //fetches repo names
-    let searcher = PackageSearcher()
-    try searcher.crawlRepoNames(db: db)
+//    let searcher = GitHubHTMLPackageSearcher()
+//    try searcher.crawlRepoNames(db: db)
     
    // let jsonPath = try cacheRootPath().addPathComponents("librariesio-swift-repos.json")
    // let jsonString = try NSString(contentsOfFile: jsonPath, encoding: NSUTF8StringEncoding) as String
