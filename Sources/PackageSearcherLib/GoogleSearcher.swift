@@ -5,20 +5,13 @@ import Redbird
 public struct GoogleSearcher: Searcher {
     
     public enum Error: ErrorProtocol {
-        case googlerError
+        case googlerError(String)
         case incorrectJSON(String)
     }
     
     public init() { }
     
-    func ensureInstalled() {
-        guard try! Task.run("googler", "--help").code == 0 else {
-            fatalError("Error: Googler not detected, please install with `brew install googler`")
-        }
-    }
-    
     public func run(db: Redbird) throws {
-        ensureInstalled()
         print("Started GoogleSearcher...")
         var index = 1
         let perPage = 100
@@ -53,7 +46,7 @@ public struct GoogleSearcher: Searcher {
         ]
         let res = try Task.run(args)
         guard res.code == 0 else {
-            throw Error.googlerError
+            throw Error.googlerError("stdout: \(res.stdout), stderr: \(res.stderr)")
         }
         let jsonString = res.stdout
         guard let json = try Jay().typesafeJsonFromData(jsonString.toBytes()).array else {

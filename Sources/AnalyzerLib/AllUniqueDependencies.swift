@@ -38,7 +38,7 @@ struct AllUniqueDependencies: Analysis {
             .map { $0.url }
             .filter { $0.hasPrefix("https://github.com/") }
             .flatMap { $0.githubName() }
-        let counts = try PackageSearcher().insertIntoDb(db: db, newlyFetched: Array(dependencyGitHubUrls))
+        let counts = try GoogleSearcher().insertIntoDb(db: db, newlyFetched: Array(dependencyGitHubUrls))
         print("Added \(counts.added) new dependencies to our list")
         print("Overall found \(allDependencies.count) dependencies:")
     }
